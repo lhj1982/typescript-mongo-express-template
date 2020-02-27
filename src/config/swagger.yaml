@@ -1,0 +1,3349 @@
+openapi: 3.0.0
+info:
+  description: "JBS api document"
+  version: "1.0.0"
+  title: "JBS API"
+  termsOfService: "http://swagger.io/terms/"
+  contact:
+    email: "lhj1982@gmail.com"
+  license:
+    name: MIT
+tags:
+- name: "auth"
+  description: "User authentication and authorization"
+- name: "script"
+  description: "Access to scripts"
+- name: "shop"
+  description: "Access to shop"
+- name: "event"
+  description: "Access to script events"
+- name: "user"
+  description: "Operations about user"
+- name: "price-schema"
+  description: "Operations about price schema"
+- name: "discount-rule"
+  description: "Operations about discount rules"
+- name: "notification"
+  description: "Notifications"
+- name: "order"
+  description: "Operations about orders"
+- name: "refund"
+  description: "Operations about refunds"
+- name: "landing-page"
+  description: "Operations about services will be shown on home page"
+- name: "report"
+  description: "Operations about report"
+- name: "tag"
+  description: "Operations about tags"
+- name: "reward"
+  description: "Operations about user rewards"
+
+servers:
+  - url: http://localhost:3000
+    description: Optional server description, e.g. Internal staging server for testing
+  - url: https://api.boogoogoo.com
+    description: Optional server description, e.g. Main (production) server
+    
+
+paths:
+  /oauth/login:
+    post:
+      tags:
+      - "auth"
+      summary: "Authorize user via wechat"
+      description: ""
+      operationId: "authrozieUserByWechat"
+      requestBody: 
+        description: Request content
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/OauthLogin'
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:    
+              schema:
+                $ref: '#/components/schemas/OauthResponse'
+        default:
+          description: "Invalid input"
+  /oauth/code2session:
+    post:
+      tags:
+      - "auth"
+      summary: "Exchange wechat code to session"
+      description: "Exchange wechat code to session"
+      operationId: "authorizeCode2Session"
+      requestBody: 
+        description: Request content
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                code:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:    
+              schema:
+                type: "object"
+                properties:
+                  openid:
+                    type: "string"
+                  session_key:
+                    type: "string"
+        default:
+          description: "Invalid input"
+
+  /auth/login:
+    post:
+      tags:
+      - "auth"
+      summary: "Authorize user using username and passsword"
+      description: ""
+      operationId: "authrozieUserByUsernameAndPassword"
+      requestBody: 
+        description: Request content
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                username:
+                  type: "string"
+                password:
+                  type: "string"
+                  format: "password"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:    
+              schema:
+                $ref: '#/components/schemas/OauthResponse'
+        default:
+          description: "Invalid input"
+          
+  /scripts:
+    get:
+      tags:
+      - "script"
+      summary: "List all scripts"
+      operationId: "listScripts"
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+        - in: query
+          name: keyword
+          description: Search keyword
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ScriptsResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      tags:
+      - "script"
+      summary: "Create a new script"
+      operationId: "createScript"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - key
+                - name
+                - description
+                - duration
+                - minNumberOfPersons
+                - maxNumberOfPersons
+                - introImage
+                - estimatedPrice
+              properties:
+                key:
+                  type: string
+                name:
+                  type: string
+                description:
+                  type: string
+                minNumberOfPersons:
+                  type: integer
+                  format: int32
+                maxNumberOfPersons:
+                  type: integer
+                  format: int32
+                duration:
+                  type: integer
+                  format: int32
+                introImage:
+                  type: string
+                estimatedPrice:
+                  type: string
+                tags:
+                  type: array
+                  items:
+                    type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Script'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          
+  /scripts/{id}:
+    get:
+      tags:
+      - "script"
+      summary: "Get one script by id"
+      operationId: "getScriptById"
+      parameters:
+        - in: path
+          name: id
+          description: script id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Script'
+        default:
+          description: 'Default response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /scripts/{id}/watch:
+    post:
+      tags:
+      - 'script'
+      summary: "Add script to watch list"
+      operationId: "addScriptToWatchList"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          description: script id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchList'
+        default:
+          description: 'Default response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      tags:
+      - 'script'
+      summary: "Remove script from watch list"
+      operationId: "removeScriptToWatchList"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          description: script id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/WatchList'
+        default:
+          description: 'Default response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /scripts/feed:
+    get:
+      tags:
+      - "script"
+      summary: "Get script feed"
+      operationId: "getScriptFeed"
+      parameters:
+        - in: query
+          name: discountKey
+          description: discount keys, multiple keys separated by comma.
+          required: true
+          schema:
+            type: string
+        - in: query
+          name: limit
+          description: limit
+          schema:
+            type: integer
+            format: int32
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfScripts'
+        default:
+          description: 'Default response'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /shops:
+    get:
+      tags:
+      - "shop"
+      summary: "List all shops"
+      operationId: "listShops"
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ShopsResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      tags:
+      - "shop"
+      summary: "Add new shop"
+      operationId: "AddShop"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - name
+                - key
+                - address
+                - mobile
+                - contactName
+                - contactMobile
+                - city
+              properties:
+                name:
+                  type: "string"
+                key:
+                  type: "string"
+                address:
+                  type: "string"
+                mobile:
+                  type: "string"
+                wechatId:
+                  type: "string"
+                wechatName:
+                  type: "string"
+                contactName:
+                  type: "string"
+                contactMobile:
+                  type: "string"
+                province:
+                  type: "integer"
+                district:
+                  type: "integer"
+                city:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          
+  /shops/{id}:
+    get:
+      tags:
+      - "shop"
+      summary: "Get one shop by id"
+      operationId: "getShopById"
+      parameters:
+        - in: path
+          name: id
+          description: shop id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+                
+  /shops/{shopId}/script/{scriptId}:
+    post:
+      tags:
+      - "shop"
+      summary: "Add one script to a shop"
+      operationId: "addSingleShopScript"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: shopId
+          required: true
+          description: shop id
+          schema:
+            type: string
+        - in: path
+          name: scriptId
+          required: true
+          description: script id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Shop'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+          
+  /events:
+    get:
+      tags:
+      - "event"
+      summary: "List events, apply filter if exist"
+      operationId: "listEvents"
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: filter
+          description: filter to apply, status or availableSpot etc, it has to be a urlencoded json string
+          schema:
+            type: "string"
+            description: urlencoded filter json string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      tags:
+      - "event"
+      summary: "Add new event"
+      operationId: "addEvent"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        description: event body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - shopId
+                - scriptId
+                - startTime
+                - hostUserId
+                - hostUserMobile
+                - hostUserWechatId
+                - price
+              properties:
+                shopId:
+                  type: "string"
+                scriptId:
+                  type: "string"
+                startTime:
+                  type: "string"
+                  format: "date-time"
+                hostUserId:
+                  type: "string"
+                hostUserMobile:
+                  type: "string"
+                hostUserWechatId:
+                  type: "string"
+                hostComment:
+                  type: "string"
+                numberOfOfflinePersons:
+                  type: "integer"
+                  format: "int32"
+                  minimum: 0
+                price:
+                  type: "integer"
+                  format: int32
+                isHostJoin:
+                  type: "boolean"
+                  default: true
+                supportPayment:
+                  type: "boolean"
+                  default: false
+              example:
+                shopId: '1234'
+                scriptId: '1234'
+                startTime: '2019-01-01 12:00:00'
+                hostUserId: '2323'
+                hostUserMobile: 'test'
+                hostUserWechatId: 'test'
+                numberOfOfflinePersons: 0
+                price: 100
+                isHostJoin: true
+                supportPayment: false
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  
+  /events/{scriptId}/{shopId}:
+    get:
+      tags:
+      - "event"
+      summary: "List all events by given script and shop"
+      operationId: "listEventsByScriptAndShop"
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+            format: int32
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/{scriptId}/{shopId}/discount-rules:
+    get:
+      tags:
+      - "event"
+      summary: "Retrieve all discount rules for given shop and script"
+      description: "Retrieve all discount rules for given shop and script"
+      operationId: "getDiscountRules"
+      parameters:
+        - in: path
+          name: scriptId
+          required: true
+          description: script id
+          schema:
+            type: string
+        - in: path
+          name: shopId
+          required: true
+          description: shopId
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  type: "object"
+                  $ref: '#/components/schemas/DiscountRuleMap'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  
+  /events/{scriptId}/{shopId}/available-discount-rules:
+    get:
+      tags:
+      - "event"
+      summary: "Retrieve available discount rules"
+      description: "Retrieve available discount rules."
+      operationId: "getAvailableDiscountRules"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: scriptId
+          required: true
+          description: script id
+          schema:
+            type: string
+        - in: path
+          name: shopId
+          required: true
+          description: shopId
+          schema:
+            type: string
+        - in: query
+          name: startTime
+          description: start time
+          schema:
+            type: string
+            format: date-time
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  type: "object"
+                  $ref: '#/components/schemas/DiscountRuleMap'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/{eventId}:
+    get:
+      tags:
+      - "event"
+      summary: "Get an event detail info"
+      operationId: "getEventById"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          description: event id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetails'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    put:
+      tags:
+      - "event"
+      summary: "Update a given event"
+      operationId: "updateEventById"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          description: event id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: content body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                price:
+                  type: "integer"
+                  format: "int32"
+                startTime:
+                  type: "string"
+                hostComment:
+                  type: "string"
+                numberOfOfflinePersons:
+                  type: "integer"
+                  format: "int32"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/{eventId}/simplified:
+    get:
+      tags:
+      - "event"
+      summary: "Get an event simplified detail info"
+      operationId: "getSimplifiedEventById"
+      parameters:
+        - in: path
+          name: eventId
+          description: event id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventDetails'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/calendar/{date}:
+    get:
+      tags:
+      - "event"
+      summary: "Get events list by given date"
+      operationId: "getEventsByDate"
+      parameters:
+        - in: path
+          name: date
+          description: local date, format: YYYY-MM-DD
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: status
+          description: status to include, if multiple status, separate by comma
+          schema:
+            type: string
+          example:
+            status: ready,completed,expired
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ArrayOfEvents'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/calendar/{date}/count:
+    get:
+      tags:
+      - "event"
+      summary: "Get events count of the whole week in which the given date falls"
+      operationId: "getEventsCountByDate"
+      parameters:
+        - in: path
+          name: date
+          description: local date, format: YYYY-MM-DD
+          required: true
+          schema:
+            type: string
+            format: date
+        - in: query
+          name: status
+          description: status to include, if multiple status, separate by comma
+          schema:
+            type: string
+          example:
+            status: ready,completed,expired
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  type: "object"
+                  properties:
+                    startDate:
+                      type: "string"
+                    numberOfEvents:
+                      type: "integer"
+                      format: "int32"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/{eventId}/join:
+    post:
+      tags:
+      - "event"
+      summary: "User join a given event"
+      operationId: "joinEvent"
+      security:
+        - bearerAuth: []
+      requestBody: 
+        required: true
+        description: join event request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - userId
+                - source
+                - wechatId
+              properties:
+                userId:
+                  type: "string"
+                source:
+                  type: "string"
+                  enum:
+                    - online
+                    - offline
+                mobile:
+                  type: "string"
+                wechatId:
+                  type: "string"
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          description: event id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventUser'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/{eventId}/users/cancel:
+    put:
+      tags:
+      - "event"
+      summary: "Cancel a user event"
+      description: "User choose not to join a given event. User can only cancel his own booking, host can cancel others booking, and can blacklist user as well"
+      operationId: "cancelEventUser"
+      security:
+        - bearerAuth: []
+      requestBody: 
+        required: true
+        description: cancel user event request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - userId
+                - status
+              properties:
+                status:
+                  type: "string"
+                  enum:
+                    - cancelled
+                    - blacklisted
+                userId:
+                  type: "string"
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          description: event id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventUser'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+
+  /events/{eventId}/users/update-status:
+    put:
+      tags:
+      - "event"
+      summary: "Update a user event status"
+      description: "Orgnizer can update a user event status to paid/unpaid"
+      operationId: "updateEventUserStatus"
+      security:
+        - bearerAuth: []
+      requestBody: 
+        required: true
+        description: update user event status request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - userId
+                - status
+              properties:
+                status:
+                  type: "string"
+                  enum:
+                    - paid
+                    - unpaid
+                    - cancelled
+                userId:
+                  type: "string"
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          description: event id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventUser'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  # /events/{eventId}/users/update:
+  #   put:
+  #     tags:
+  #     - "event"
+  #     summary: "Update a user event"
+  #     description: "Update a user event, for example, numberOfLikes"
+  #     operationId: "updateEventUser"
+  #     security:
+  #       - bearerAuth: []
+  #     requestBody: 
+  #       required: true
+  #       description: update user event status request body
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: "object"
+  #             required:
+  #               - userId
+  #             properties:
+  #               numberOfLikes:
+  #                 type: "integer"
+  #                 format: "int32"
+  #               userId:
+  #                 type: "string"
+  #     parameters:
+  #       - in: path
+  #         name: eventId
+  #         required: true
+  #         description: event id
+  #         schema:
+  #           type: string
+  #     responses:
+  #       200:
+  #         description: "Success"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/EventUser'
+  #       default:
+  #         description: "Invalid input"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/ApiResponse'
+
+  /events/{eventId}/cancel:
+    put:
+      tags:
+      - "event"
+      summary: "Cancel event"
+      description: "Cancel event."
+      operationId: "cancelEvent"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          description: event id
+          required: true
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/{eventId}/complete:
+    put:
+      tags:
+      - "event"
+      summary: "Mark an event to complete"
+      description: "Mark an event to complete, only when it's fully booked"
+      operationId: "completeEvent"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          description: event id
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - status
+              properties:
+                status:
+                  type: "string"
+                  enum: ["completed"]
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Event'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  
+  /events/{eventId}/orders:
+    get:
+      tags:
+      - "event"
+      summary: "Get orders and refunds for given event"
+      description: "Get orders and refunds for given event"
+      operationId: "getEventOrders"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          description: event id
+          schema:
+            type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/price-schema:
+    get:
+      tags:
+      - "event"
+      summary: "Retrieve price schema of event"
+      description: "Retrieve price schema of event"
+      operationId: "getEventPriceSchema"
+      parameters:
+        - in: query
+          name: scriptId
+          description: script id
+          schema:
+            type: string
+        - in: query
+          name: shopId
+          required: true
+          description: shopId
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PriceWeeklySchema'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/archive-events:
+    get:
+      tags:
+      - "event"
+      summary: "Archive expired events"
+      description: "Archive expired events, only available for admin."
+      operationId: "archiveEvents"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  code:
+                    type: "string"
+                    enum: ['FAIL', 'SUCCESS']
+                  data:
+                    type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users:
+    post:
+      tags:
+      - "user"
+      summary: "Create user"
+      description: "This can only be done by the logged in user."
+      operationId: "createUser"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Created user request object"
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/User'
+      responses:
+        default:
+          description: "successful operation"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/{userId}:
+    get:
+      tags:
+      - "user"
+      summary: "Retrieve user information"
+      description: "Retrieve user information."
+      operationId: "getUserDetailById"
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: user id
+          schema:
+            type: "string"
+        - in: query
+          name: status
+          description: status to include, if multiple status, separate by comma
+          schema:
+            type: string
+          example:
+            status: ready,completed
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserDetail'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    put:
+      tags:
+      - "user"
+      summary: "Update a user"
+      description: "Update a single user."
+      operationId: "updateUser"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Update user request object"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                nickName:
+                  type: "string"
+                gender:
+                  type: "string"
+                city:
+                  type: "string"
+                description:
+                  type: "string"
+                mobile:
+                  type: "string"
+                wechatId:
+                  type: "string"
+                email:
+                  type: "string"
+                avatarImage:
+                  type: "string"
+                ageTag:
+                  type: "string"
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: user id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/{userId}/block:
+    put:
+      tags:
+      - "user"
+      summary: "Block user"
+      description: "Block user by given userId. Required permission: user.block"
+      operationId: "blockUserById"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: user id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  
+  /users/{userId}/tag:
+    post:
+      tags:
+      - "user"
+      summary: "Give tag to a given user"
+      description: "Give tag to a given user"
+      operationId: "tagUser"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: user id to tag
+          schema:
+            type: string
+      requestBody:
+        description: "Tag user request body"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                tagId:
+                  type: "string"
+                type:
+                  type: "string"
+                  enum: ["event_user"]
+                taggedBy:
+                  type: "string"
+                objectId:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserTag'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/{userId}/endorse:
+    post:
+      tags:
+      - "user"
+      summary: "Endorse a given user"
+      description: "Endorse a given user"
+      operationId: "endorseUser"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: user id to tag
+          schema:
+            type: string
+      requestBody:
+        description: "Tag user request body"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                type:
+                  type: "string"
+                  enum: ["event_user"]
+                endorsedBy:
+                  type: "string"
+                objectId:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEndorsement'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      tags:
+      - "user"
+      summary: "Delete endorse a given user"
+      description: "Delete endorse a given user"
+      operationId: "unendorseUser"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: userId
+          required: true
+          description: user id to tag
+          schema:
+            type: string
+      requestBody:
+        description: "Tag user request body"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                type:
+                  type: "string"
+                  enum: ["event_user"]
+                endorsedBy:
+                  type: "string"
+                objectId:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserEndorsement'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /users/update-tags-endorsements:
+    post:
+      tags:
+      - "user"
+      summary: "Update user tags and endorsements"
+      description: "Update user tags and endorsements."
+      operationId: "updateUserTagsAndEndorsements"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              code:
+                type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  /users/update-credits:
+    post:
+      tags:
+      - "user"
+      summary: "Update user credits"
+      description: "Update user credits."
+      operationId: "updateUserCredits"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              code:
+                type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /profile:
+    get:
+      tags:
+      - "user"
+      summary: "Get current user profile"
+      description: "Get current user profile."
+      operationId: "getProfile"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/User'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /profile/token-status:
+    get:
+      tags:
+      - "user"
+      summary: "Get token status of logged in user"
+      description: "Get token status of logged in user."
+      operationId: "getTokenStatus"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  issuedAt:
+                    type: "number"
+                    format: "int32"
+                  expiredAt:
+                    type: "number"
+                    format: "int32"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  
+  /profile/my-events:
+    get:
+      tags:
+      - "user"
+      summary: "Get event list hosted or joined by logged in user"
+      description: "Get event list joined by logged in user."
+      operationId: "getMyEvents"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          description: status to include, if multiple status, separate by comma
+          schema:
+            type: string
+          example:
+            status: ready,complete
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Event'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /profile/wechat-data:
+    post:
+      tags:
+      - "profile"
+      summary: "Get wechat encrypted data"
+      description: "Get wechat encrypted data, such as phoneNumber"
+      operationId: "getWeChatData"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Request object"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                encryptedData:
+                  type: "string"
+                iv:
+                  type: "string"
+                sessionKey:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Event'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+  
+  /price/price-schema:
+    post:
+      tags:
+      - "price-schema"
+      summary: "Create price schema"
+      descriptiojn: "Create price schmea"
+      operationId: "createPriceSchema"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/PriceSchema'
+
+  /discount-rules:
+    get:
+      tags:
+      - "discount-rule"
+      summary: "Retrieve available discount rules"
+      description: "Retrieve available discount rules."
+      operationId: "getDiscountRules"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/DiscountRule'
+    post:
+      tags:
+      - "discount-rule"
+      summary: "Add new discount rule"
+      description: "Add new discount rule."
+      operationId: "AddDiscountRule"
+      security:
+        - bearerAuth: []
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - key
+                - description
+                - timeDescription
+                - timeSpan
+                - days
+                - discount
+              properties:
+                key:
+                  type: "string"
+                description:
+                  type: "string"
+                timeDescription:
+                  type: "string"
+                timeSpan:
+                  type: "array"
+                  items:
+                    type: "object"
+                    properties:
+                      from:
+                        type: "string"
+                      to:
+                        type: "string"
+                days:
+                  type: "array"
+                  items:
+                    type: "integer"
+                    format: "int32"
+                discount:
+                  type: "object"
+                  properties:
+                    host:
+                      type: "integer"
+                      format: "int32"
+                    participator:
+                      type: "integer"
+                      format: "int32"
+      response:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                $ref: '#/components/schemas/DiscountRule'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /notifications:
+    get:
+      tags:
+      - "notification"
+      summary: "Retrieve notifications list"
+      description: "Retrieve notifications list. Required permission: notifications.read"
+      operationId: "getNotifications"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/NotificationsResponse'
+
+  /notifications/{serialNumber}:
+    put:
+      tags:
+      - "notification"
+      summary: "Update notification by serialNumber"
+      description: "Update notification by serialNumber. Required permission: notification.update"
+      operationId: "updateNotificationBySerialNumber"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: serialNumber
+          required: true
+          description: serial number of notification
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                read:
+                  type: "boolean"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /notifications/sms-send-callback:
+    post:
+      tags:
+      - "notification"
+      summary: "Retrieve sms notification send report"
+      description: "Retrieve sms notification send report."
+      operationId: "smsSendCallback"
+      requestBody:
+        description: "Request object"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                reports:
+                  type: "string"
+              example:
+                reports: "180828100924138386,13912345678,0, DELIVRD, 00000020140805135416, 20181125112640; 180828100924138386,13912345678,0, DELIVRD, 00000020140805135416, 20181125112640"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /orders:
+    get:
+      tags:
+      - "order"
+      summary: "Get orders"
+      description: "Ger orders list."
+      operationId: "getOrders"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+            format: int32
+        - in: query
+          name: tradeNo
+          description: keyword of trade no
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /orders/{orderId}/refund/{refundId}:
+    put:
+      tags:
+      - "order"
+      summary: "Update a refund"
+      description: "Update a refund."
+      operationId: "updateRefund"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderId
+          description: order id
+          schema:
+            type: "string"
+        - in: path
+          name: refundId
+          description: refund id
+          schema:
+            type: "string"
+      requestBody:
+        description: "Update refund body"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                status:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /orders/{orderId}/pay:
+    post:
+      tags:
+      - "order"
+      summary: "Pay an order"
+      description: "Pay an order. For wechat pay, it generates prepay id and don't confirm the payment until received the payment callback."
+      operationId: "payOrder"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          description: order id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  appId:
+                    type: "string"
+                  timeStamp:
+                    type: "string"
+                  nonceStr:
+                    type: "string"
+                  package:
+                    type: "string"
+                  signType:
+                    type: "string"
+                  paySign:
+                    type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /order/{orderId}/pay-status:
+    get:
+      tags:
+      - "order"
+      summary: "Get order payment status"
+      description: "Get order payment status"
+      operationId: "getOrderPaymentStatus"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderId
+          required: true
+          description: order id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  appId:
+                    type: "string"
+                  timeStamp:
+                    type: "string"
+                  nonceStr:
+                    type: "string"
+                  package:
+                    type: "string"
+                  signType:
+                    type: "string"
+                  paySign:
+                    type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /orders/wechat/pay_callback:
+    post:
+      tags:
+      - "order"
+      summary: "wechat pay notify callback"
+      description: "wechat pay notify callback"
+      operationId: "notifyWechatPayCallback"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  status:
+                    type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /orders/wechat/refund_callback:
+    post:
+      tags:
+      - "order"
+      summary: "wechat refund notify callback"
+      description: "wechat refund notify callback"
+      operationId: "notifyWechatRefundCallback"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "object"
+                properties:
+                  status:
+                    type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /orders/refund:
+    post:
+      tags:
+      - "order"
+      summary: "Refund"
+      description: "Refund"
+      operationId: "batchRefund"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Refund'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /leading-board:
+    get:
+      tags:
+      - "landing-page"
+      summary: "Show leading board"
+      description: "Show leading board"
+      operationId: "getLeadingBoard"
+      parameters:
+        - in: query
+          name: validFor
+          description: leading board valid date, format, YYYY-MM-DD
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/LeadingBoard'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+    post:
+      tags:
+      - "landing-page"
+      summary: "Update leading board"
+      description: "Update leading board"
+      operationId: "updateLeadingBoard"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /reports/orders:
+    get:
+      tags:
+      - "report"
+      summary: "Get orders report"
+      description: "Get order report"
+      operationId: "getOrdersReport"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+        - in: query
+          name: shopName
+          required: true
+          description: shop name
+          schema:
+            type: string
+        - in: query
+          name: fromDate
+          required: true
+          description: search from date, inclusive
+        - in: query
+          name: toDate
+          required: true
+          description: search to date, exclusive
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrdersResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /reports/events:
+    get:
+      tags:
+      - "report"
+      summary: "Get events report"
+      description: "Get events report"
+      operationId: "getEventsReport"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: offset
+          description: The number of items to skip before starting to collect the result set
+          schema:
+            type: integer
+        - in: query
+          name: limit
+          description: The numbers of items to return
+          schema:
+            type: integer
+        - in: query
+          name: shopName
+          required: true
+          description: shop name
+          schema:
+            type: string
+        - in: query
+          name: fromDate
+          required: true
+          description: search from date, inclusive
+        - in: query
+          name: toDate
+          required: true
+          description: search to date, exclusive
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EventsResponse'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /tags:
+    get:
+      tags:
+      - "tag"
+      summary: "Get events report"
+      description: "Get events report"
+      operationId: "getEventsReport"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Tag'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /rewards/redemptions:
+    get:
+      tags:
+      - "reward"
+      summary: "Get active reward redemptions"
+      description: "Get available reward redemptions"
+      operationId: "getActiveRewardRedemptions"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/RewardRedemption'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    post:
+      tags:
+      - "reward"
+      summary: "Create reward redemptions"
+      description: "Create reward redemptions"
+      operationId: "createRewardRedemption"
+      security:
+        - bearerAuth: []
+      requestBody: 
+        description: Request content
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRewardRedemptionRequest'
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/RewardRedemption'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /rewards/redemptions/{rewardRedemptionId}/apply:
+    post:
+      tags:
+      - "reward"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: rewardRedemptionId
+          description: Reward redemption id
+          schema:
+            type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/UserRewardRedemption'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+components:
+  securitySchemes:
+    bearerAuth:            # arbitrary name for the security scheme
+      type: http
+      scheme: bearer
+      bearerFormat: JWT    # optional, arbitrary value for documentation purposes
+  schemas:
+    OauthLogin:
+      type: "object"
+      required:
+        - code
+        - type
+        - nickName
+        - avatarUrl
+        - gender
+      properties:
+        code:
+          type: "string"
+        type:
+          type: "string"
+          enum:
+            - wxapp
+        nickName:
+          type: "string"
+        avatarUrl:
+          type: "string"
+        description:
+          type: "string"
+        gender:
+          type: "string"
+          enum: ["male", "female"]
+        country:
+          type: "string"
+        province:
+          type: "string"
+        city:
+          type: "string"
+        language:
+          type: "string"
+      example:
+        code: '1234'
+        type: 'wxapp'
+        nickName: 'test'
+        avatarUrl: "http://test"
+        gender: "male"
+        country: "China"
+        city: "Shanghai"
+        language: "zh_CN"
+        province: "xxx"
+    
+    OauthResponse:
+      type: "object"
+      properties:
+        openId:
+          type: "string"
+        accessToken:
+          type: "string"
+        user:
+          type: "object"
+          $ref: '#/components/schemas/User'
+
+    Permission:
+      type: "object"
+      properties:
+        domain:
+          type: "string"
+        operations:
+          type: "array"
+          items:
+            type: "string"
+      example:
+        domain: "user"
+        operations:
+          - read
+          - write
+
+    Role:
+      type: "object"
+      properties:
+        name:
+          type: "string"
+          enum: ["admin", "user", "orgnizer"]
+        permissions:
+          type: "array"
+          items:
+            $ref: '#/components/schemas/Permission'
+
+    User:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        openId:
+          type: "string"
+        unionId:
+          type: "string"
+        nickName:
+          type: "string"
+        firstName:
+          type: "string"
+        lastName:
+          type: "string"
+        email:
+          type: "string"
+        password:
+          type: "string"
+        phone:
+          type: "string"
+        mobile:
+          type: "string"
+        wechatId:
+          type: "string"
+          description: "User wechat id"
+        avatarImage:
+          type: "string"
+          description: "User avatar image url"
+        roles:
+          type: "array"
+          items:
+            type: "object"
+            $ref: '#/components/schemas/Role'
+        status:
+          type: "string"
+          enum: ['active', 'inactive', 'blocked']
+        numberOfEndorsements:
+          type: "integer"
+          format: "int32"
+        topTags:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              _id:
+                type: "string"
+              name:
+                type: "string"
+              count:
+                type: "integer"
+                format: "int32"
+        shops:
+          type: "array"
+          items:
+            $ref: '#/components/schemas/Shop'
+      xml:
+        name: "User"
+    
+    UserDetail:
+      type: "object"
+      allOf: 
+        - $ref: '#/components/schemas/User'
+        - 
+          type: "object"
+          properties:
+            events:
+              type: "array"
+              items:
+                $ref: '#/components/schemas/EventDetails'  
+
+    Script:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        key:
+          type: "string"
+        name:
+          type: "string"
+        description:
+          type: "string"
+        minNumberOfPersons:
+          type: "integer"
+        maxNumberOfPersons:
+          type: "integer"
+        duration:
+          type: "integer"
+        introImage:
+          type: "string"
+        estimatedPrice:
+          type: "string"
+        createdAt: 
+          type: "string"
+          format: "date-time"
+        status:
+          type: "string"
+          enum: ['online', 'offline']
+        tags:
+          type: "array"
+          items:
+            type: "string"
+        shops:
+          type: "array"
+          items:
+            $ref: '#/components/schemas/Shop'
+        users:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              _id:
+                type: "string"
+              id:
+                type: "string"
+              nickName:
+                type: "string"
+              avatarUrl:
+                type: "string"
+        watches:
+          type: "array"
+          items:
+            $ref: '#/components/schemas/User'
+    
+    ArrayOfScripts:
+      type: "array"
+      items:
+        $ref: '#/components/schemas/Script'
+    
+    ScriptsResponse:
+      allOf: 
+        - $ref: '#/components/schemas/PaginatedDataResponse'
+        - 
+          type: "object"
+          properties:
+            data:
+              $ref: '#/components/schemas/ArrayOfScripts'
+              
+    Shop:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        key:
+          type: "string"
+        name:
+          type: "string"
+        address:
+          type: "string"
+        mobile:
+          type: "string"
+        phone:
+          type: "string"
+        wechatId:
+          type: "string"
+        wechatName:
+          type: "string"
+        supportedPaymentMethods:
+          type: "array"
+          items:
+            type: "string"
+            enum: ["wechat"]
+    
+    ArrayOfShops:
+      type: "array"
+      items:
+        $ref: '#/components/schemas/Shop'
+    
+    ShopsResponse:
+      allOf: 
+        - $ref: '#/components/schemas/PaginatedDataResponse'
+        - 
+          type: "object"
+          properties:
+            data:
+              $ref: '#/components/schemas/ArrayOfShops'  
+    
+    EventPrice:
+      type: "object"
+      properties:
+        weekdayDayPrice:
+          type: "integer"
+        weekdayNightPrice:
+          type: "integer"
+        weekendPrice:
+          type: "integer"
+    Event:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        name:
+          type: "string"
+        startTime:
+          type: "string"
+        endTime:
+          type: "string"
+        hostUser:
+          type: "object"
+          $ref: '#/components/schemas/User'
+        script:
+          type: "object"
+          $ref: '#/components/schemas/Script'
+        shop:
+          type: "object"
+          $ref: '#/components/schemas/Shop'
+        minNumberOfPersons:
+          type: "integer"
+          format: "int32"
+        maxNumberOfPersons:
+          type: "integer"
+          format: "int32"
+        numberOfOfflinePersons:
+          type: "integer"
+          format: "int32"
+        numberOfParticipators:
+          type: "integer"
+          format: "int32"
+        minNumberOfAvailableSpots:
+          type: "integer"
+          format: "int32"
+        maxNumberOfAvailableSpots:
+          type: "integer"
+          format: "int32"
+        hostComment:
+          type: "string"
+        price:
+          type: "integer"
+          format: "int32"
+        discountRule:
+          type: "object"
+          $ref: '#/components/schemas/DiscountRule'
+        supportPayment:
+          type: "boolean"
+
+
+    EventDetails:
+      allOf: 
+        - $ref: '#/components/schemas/Event'
+        - 
+          type: object
+          properties:
+            priceWeeklySchema:
+              type: array
+              items:
+                $ref: '#/components/schemas/PriceWeeklySchema'
+            discountRule:
+              type: object
+              $ref: '#/components/schemas/DiscountRule'
+            members:
+              type: array
+              items:
+                $ref: '#/components/schemas/EventUser'
+    
+    PriceSchema:
+      type: object
+      properties:
+        timeSpan:
+          type: array
+          items:
+            type: string
+            description: "time format, HH:MM"
+        days:
+          type: array
+          items:
+            type: string
+            enum: [1,2,3,4,5,6,7]
+        price:
+          type: integer
+          format: int32
+          
+    PriceWeeklySchema:
+      type: object
+      properties:
+        script:
+          type: object
+          $ref: '#/components/schemas/Script'
+        shop:
+          type: object
+          $ref: '#/components/schemas/Shop'
+        priceSchema:
+          type: array
+          items:
+            $ref: '#/components/schemas/PriceSchema'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        script:
+          _id: "1234"
+          key: "key"
+        shop:
+          _id: "4567"
+          key: "key"
+        priceSchema:
+          - 
+            timeSpan: 
+              - "08:00"
+              - "10:00"
+            days:
+              - 1
+              - 2
+              - 3
+              - 4
+              - 5
+              - 6
+              - 7
+            price: 100
+          -
+            timeSpan: 
+              - "20:00"
+            days:
+              - 6
+              - 7
+            price: 150
+            
+    DiscountRule:
+      type: object
+      properties:
+        key:
+          type: string
+        timeDescription:
+          type: string
+        description: 
+          type: string
+        timeSpan:
+          type: array
+          items:
+            type: object
+            properties:
+              from: 
+                type: string
+                description: "HH:MM"
+              to:
+                type: string
+                description: "HH:MM"
+        days:
+          type: array
+          description: Days to which rules are applied
+          items:
+            type: string
+            enum: [1,2,3,4,5,6,7]
+        discount:
+          type: object
+          properties:
+            host:
+              type: integer
+              format: int32
+            participator:
+              type: integer
+              format: int32
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+      example:
+        key: "rule1"
+        timeDescription: "工作日晚场"
+        description: "工作日晚场，发起者返 0.1*人数*原价，参与者返 0.1*原价"
+        timeSpan:
+        - 
+          from: 17:00
+          to: 23:59
+        days:
+          - 1
+          - 2
+          - 3
+          - 4
+          - 5
+          - 6
+          - 7
+        discount:
+          sponsor: 10
+          participator: 10
+
+    DiscountRuleMap:
+      type: "object"
+      properties:
+        shop:
+          type: "object"
+          $ref: "#/components/schemas/Shop"
+        script:
+          type: "object"
+          $ref: "#/components/schemas/Script"
+        discountRule:
+          type: "object"
+          $ref: "#/components/schemas/DiscountRule"
+        createdAt:
+          type: "string"
+          format: "date-time"
+
+    ArrayOfEvents:
+      type: "array"
+      items:
+        $ref: '#/components/schemas/Event'
+    
+    EventsResponse:
+      allOf: 
+        - $ref: '#/components/schemas/PaginatedDataResponse'
+        - 
+          type: "object"
+          properties:
+            data:
+              $ref: '#/components/schemas/ArrayOfEvents'
+
+    ArrayOfEventUsers:
+      type: array
+      items:
+        $ref: '#/components/schemas/EventUser'
+
+    EventUser:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        event:
+          type: object
+          $ref: '#/components/schemas/Event'
+        user:
+          type: "string"
+          $ref: '#/components/schemas/User'
+        userName:
+          type: "string"
+        mobile:
+          type: "string"
+        source:
+          type: "string"
+          enum: ["online", "offline"]
+        status:
+          type: "type"
+          enum: ['unpaid', 'paid', 'cancelled', 'blacklisted']
+        createdAt:
+          type: "string"
+          format: "date-time"
+
+    OrdersResponse:
+      allOf: 
+        - $ref: '#/components/schemas/PaginatedDataResponse'
+        - 
+          type: "object"
+          properties:
+            data:
+              $ref: '#/components/schemas/ArrayOfOrders'
+
+    ArrayOfOrders:
+      type: array
+      items:
+        $ref: '#/components/schemas/Order'
+
+    Order:
+      type: "object"
+      properties:
+        createdBy:
+          type: "string"
+        type:
+          type: "string"
+          enum: ["event_join"]
+        objectId:
+          type: "string"
+        amount:
+          type: "number"
+          format: "double"
+        outTradeNo:
+          type: "string"
+        orderStatus:
+          type: "string"
+          enum: ["created", "paid", "refund", "cancelled"]
+        message:
+          type: "string"
+        createdAt:
+          type: "date"
+          format: "date-time"
+        payment:
+          type: "object"
+          $ref: "#/components/schemas/Payment"
+        refunds:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/Refund"
+
+    Payment:
+      type: "object"
+      properties:
+        outTradeNo:
+          type: "string"
+        prepayId:
+          type: "string"
+        tradeType:
+          type: "string"
+        totalFee:
+          type: "number"
+          format: "double"
+        settlementTotalFee:
+          type: "number"
+          format: "double"
+        feeType:
+          type: "string"
+        cashFee:
+          type: "number"
+          format: "double"
+        cashFeeType:
+          type: "string"
+        couponFee:
+          type: "string"
+        couponCount:
+          type: "string"
+        transactionId:
+          type: "string"
+        timeEnd:
+          type: "date"
+          format: "date-time"
+        resultCode:
+          type: "string"
+        errCode:
+          type: "string"
+        errCodeDesc:
+          type: "string"
+
+    ArrayOfOrders:
+      type: "array"
+      items:
+        $ref: '#/components/schemas/Order'
+    
+    OrdersResponse:
+      allOf: 
+        - $ref: '#/components/schemas/PaginatedDataResponse'
+        - 
+          type: "object"
+          properties:
+            data:
+              $ref: '#/components/schemas/ArrayOfOrders'
+
+    Refund:
+      type: "object"
+      properties:
+        user:
+          type: "string"
+        order:
+          type: "string"
+
+
+    Notification:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        serialNumber:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        audience:
+          type: "string"
+        eventType:
+          type: "string"
+        objectId:
+          type: "string"
+        recipients:
+          type: "array"
+          items:
+            type: "string"
+        message:
+          type: "string"
+        smsMessage:
+          type: "string"
+        status:
+          type: "string"
+        description:
+          type: "string"
+        result:
+          type: "string"
+        taskid:
+          type: "string"
+        read:
+          type: "boolean"
+          default: false
+        reports:
+          type: "array"
+          items:
+            taskid:
+              type: "string"
+            recipient:
+              type: "string"
+            statusCode:
+              type: "string"
+            status:
+              type: "string"
+            serialNumber:
+              type: "string"
+            sendDate:
+              type: "string"
+              format: "date-time"
+    ArrayOfNotifications:
+      type: "array"
+      items:
+        $ref: '#/components/schemas/Notification'
+    
+    NotificationsResponse:
+      allOf: 
+        - $ref: '#/components/schemas/PaginatedDataResponse'
+        - 
+          type: "object"
+          properties:
+            data:
+              $ref: '#/components/schemas/ArrayOfNotifications'
+
+    Tag:
+      type: "object"
+      properties:
+        key:
+          type: "string"
+        name:
+          type: "string"
+
+    UserTag:
+      type: "object"
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        taggedBy:
+          $ref: "#/components/schemas/User"
+        tag:
+          $ref: "#/components/schemas/Tag"
+        type:
+          type: "string"
+        objectId:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+
+    UserEndorsement:
+      type: "object"
+      properties:
+        user:
+          $ref: "#/components/schemas/User"
+        taggedBy:
+          $ref: "#/components/schemas/User"
+        type:
+          type: "string"
+        objectId:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+
+    LeadingBoard:
+      type: "object"
+      properties:
+        type:
+          type: "string"
+          enum: ['most_commission_single_event', 'most_host_event_count', 'most_commission_all_events', 'most_join_event_count_male', 'most_join_event_count_female', 'most_user_endorsements', 'most_watched_scripts']
+        user:
+          $ref: "#/components/schemas/User"
+        value:
+          type: "string"
+        data:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+
+    WatchList:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        type:
+          type: "string"
+          enum: ['script_interested']
+        objectId:
+          type: "string"
+        user:
+          $ref: "#/components/schemas/User"
+        createdAt:
+          type: "string"
+          format: "date-time"
+
+    ExternalCustomer:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        key:
+          type: "string"
+        name:
+          type: "string"
+        address:
+          type: "string"
+        createdAt:
+          type: "string"
+          format: "date-time"
+    RewardRedemption:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        type:
+          type: "string"
+          enum: ['partner_service', 'voucher', 'product_shop', 'other']
+        name:
+          type: "string"
+        description:
+          type: "string"
+        longDescription:
+          type: "string"
+        quantity:
+          type: "integer"
+          format: "int32"
+        points:
+          type: "integer"
+          format: "int32"
+        available:
+          type: "integer"
+          format: "int32"
+        externalCustomer:
+          $ref: "#/components/schemas/ExternalCustomer"
+        status:
+          type: "string"
+          enum: ['active', 'expired']
+        createdAt:
+          type: "string"
+          format: "date-time"
+        expiredAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+
+    UserRewardRedemption:
+      type: "object"
+      properties:
+        id:
+          type: "string"
+        user:
+          $ref: "#/components/schemas/User"
+        rewardRedemption:
+          $ref: "#/components/schemas/RewardRedemption"
+        voucherCode:
+          type: "string"
+        voucherValue:
+          type: "integer"
+          format: "int32"
+        points:
+          type: "integer"
+          format: "int32"
+        status:
+          type: "string"
+          enum: ['created', 'used', 'invalid', 'expired']
+        createdAt:
+          type: "string"
+          format: "date-time"
+        expiredAt:
+          type: "string"
+          format: "date-time"
+        updatedAt:
+          type: "string"
+          format: "date-time"
+    CreateRewardRedemptionRequest:
+      type: "object"
+      required:
+        - externalCustomerId
+        - type
+        - title
+        - subtitle
+      properties:
+        externalCustomerId:
+          type: "string"
+        type:
+          type: "string"
+        title:
+          type: "string"
+        subtitle:
+          type: "string"
+        description:
+          type: "string"
+        points:
+          type: "integer"
+          format: "int32"
+        quantity:
+          type: "integer"
+          format: "int32"
+        scope:
+          type: "string"
+        validPeriod:
+          type: "string"
+        reminder:
+          type: "string"
+        instruction1:
+          type: "string"
+        instruction2:
+          type: "string"
+        note:
+          type: "string"
+        imageUrl:
+          type: "string"
+
+    PaginatedDataResponse:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+        pagination:
+          type: "object"
+          properties:
+            offset:
+              type: "integer"
+            limit:
+              type: "integer"
+            total:
+              type: "integer"
+        links:
+          type: "object"
+          properties:
+            next:
+              type: "string"
+            prev:
+              type: "string"
+    ApiResponse:
+      type: "object"
+      properties:
+        code:
+          type: "string"
+          description: "Response code, for example, SUCCESS/FAIL"
+          enum:
+            - SUCCESS
+            - unauthorized
+            - access_denied
+        message:
+          type: "string"
+          description: "Error message, if any"
+        data:
+          type: "string"
+    UnauthorizedError:
+      description: Access token is missing or invalid
+externalDocs:
+  description: "Find out more about Swagger"
+  url: "http://swagger.io"
