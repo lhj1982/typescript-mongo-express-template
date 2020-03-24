@@ -3,8 +3,12 @@
 ## Install
 
 ### Node and TypeScript
-```
+
 install nodejs with nvm
+```
+curl -o- https://raw.githubusercontent.com/creationix/nvm/v0.33.11/install.sh | bash
+
+nvm install node
 
 npm install typescript -g
 ```
@@ -71,7 +75,21 @@ https://serverfault.com/questions/836198/how-to-install-docker-on-aws-ec2-instan
 Redis is used for server side cache.
 
 ```
-docker run -p 6379:6379 --name jbs-api-redis -d redis redis-server --appendonly yes
+docker volume create redis-data
+
+docker run -d \
+  -h redis \
+  -e REDIS_PASSWORD=msAgGMk6l64H \
+  -v redis-data:/data \
+  -p 6379:6379 \
+  --name jbs-api-redis \
+  --restart always \
+  redis:5.0.5-alpine3.9 /bin/sh -c 'redis-server --appendonly yes --requirepass ${REDIS_PASSWORD}'
+
+
+remove
+docker rm -f jbs-api-redis
+docker volume rm redis-data
 ```
 
 # Certificate
@@ -83,10 +101,10 @@ openssl pkcs12 -export -out client-certificate2.pfx -inkey client1-key.pem -in c
 
 # Orders and Refund
 
-	- An order is created when
-		1. A user create an event
-		2. A user join an event
-	- An order status table
+  - An order is created when
+    1. A user create an event
+    2. A user join an event
+  - An order status table
 | status      | Description |
 | ----------- | ----------- |
 | created     | order created, not paid |
@@ -94,12 +112,12 @@ openssl pkcs12 -export -out client-certificate2.pfx -inkey client1-key.pem -in c
 | refund      | when the order is refund |
 | cancelled   | when the order is cancelled |
 
-	- A user choose to pay, the payment status will be updated in order table
-	- A user can choose to cancel an event, when an event is cancelled, the following will happen
-		1. Retrieve all user paid bookings for this event
-		2. Mark their orders status as refund
-		3. Create corresponding refund for those users
-	- Refund status
+  - A user choose to pay, the payment status will be updated in order table
+  - A user can choose to cancel an event, when an event is cancelled, the following will happen
+    1. Retrieve all user paid bookings for this event
+    2. Mark their orders status as refund
+    3. Create corresponding refund for those users
+  - Refund status
 | status      | Description |
 | ----------- | ----------- |
 | created     | refund created, initial status |
@@ -107,8 +125,8 @@ openssl pkcs12 -export -out client-certificate2.pfx -inkey client1-key.pem -in c
 | refund      | refund is requested |
 | failed      | refund failed according to wechat callback |
 
-	- There is a separate process to iterate all approved refunds
-	- When a booking is in refund, the user can rejoin the event, eventually, create new order
+  - There is a separate process to iterate all approved refunds
+  - When a booking is in refund, the user can rejoin the event, eventually, create new order
 
 # Run
 
@@ -160,10 +178,10 @@ db.users.update({openId: "opcf_0En_ukxF-NVT67ceAyFWfJw"}, {$set: {roles: [Object
 
 ```json
 {
-	status: 200,
-	code: <code>,
-	message: <message>,
-	data: <data>
+  status: 200,
+  code: <code>,
+  message: <message>,
+  data: <data>
 }
 ```
 
@@ -220,17 +238,17 @@ unknown_error
 
 ```
 [{
-	"name": "test",
-	"key": "key1",
-	"address": "test",
-	"mobile": "test",
-	"phone": "",
-	"contactName": "test",
-	"contactMobile": "test",
-	"province": "",
-	"city": "",
-	"district": "虹口区",
-	"createdAt": { 
+  "name": "test",
+  "key": "key1",
+  "address": "test",
+  "mobile": "test",
+  "phone": "",
+  "contactName": "test",
+  "contactMobile": "test",
+  "province": "",
+  "city": "",
+  "district": "虹口区",
+  "createdAt": { 
       "$date":{ 
          "$numberLong":"1568642805966"
       }
@@ -242,14 +260,14 @@ unknown_error
 ## scripts
 ```
 [{
-	"name": "test",
-	"key": "key1",
-	"description": "test",
-	"minNumberOfPersons": 6,
-	"maxNumberOfPersons": 10,
-	"duration": 240,
-	"introImage": "",
-	"createdAt":{ 
+  "name": "test",
+  "key": "key1",
+  "description": "test",
+  "minNumberOfPersons": 6,
+  "maxNumberOfPersons": 10,
+  "duration": 240,
+  "introImage": "",
+  "createdAt":{ 
       "$date":{ 
          "$numberLong":"1568642805966"
       }
@@ -261,20 +279,20 @@ unknown_error
 ## pricetemplates
 ```
 [{
-	"script": ObjectId(\"5d7db0ac381bf6655915fd9c\"),
+  "script": ObjectId(\"5d7db0ac381bf6655915fd9c\"),
     "shop": ObjectId(\"5d7db0ac381bf6655915fd9c\"),
     "price": {
-    	"weekdayDayPrice": 100,
-	    "weekdayNightPrice": 100,
-	    "weekendPrice": 200
-	}
+      "weekdayDayPrice": 100,
+      "weekdayNightPrice": 100,
+      "weekendPrice": 200
+  }
 }]
 ```
 
 ## events
 ```
 [{
-	"startTime": { 
+  "startTime": { 
       "$date":{ 
          "$numberLong":"1568642805966"
       }
@@ -287,8 +305,8 @@ unknown_error
     "hostUser": ObjectId(\"5d7db0ac381bf6655915fd9c\"),
     "hostComment": "test",
     price: 100,
-	"status": "active",
-	"createdAt": { 
+  "status": "active",
+  "createdAt": { 
       "$date":{ 
          "$numberLong":"1568642805966"
       }

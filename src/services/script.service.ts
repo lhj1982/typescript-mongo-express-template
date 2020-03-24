@@ -8,7 +8,7 @@ class ScriptService {
     if (!script) {
       throw new ResourceNotFoundException(`Script`, scriptId);
     }
-    
+
     return Object.assign({}, script.toObject());
   }
 }

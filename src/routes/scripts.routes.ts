@@ -15,18 +15,16 @@ export class ScriptsRoutes {
 
   routes(app): void {
     // Scripts
-    app
-      .route('/scripts')
-      .get(
-        cacheMiddleware(config.cache.duration),
-        (req: Request, res: Response, next: NextFunction) => {
-          // middleware
-          console.log(`Request from: ${req.originalUrl}`);
-          console.log(`Request type: ${req.method}`);
-          next();
-        },
-        this.scriptsController.getScripts
-      );
+    app.route('/scripts').get(
+      cacheMiddleware(config.cache.duration),
+      (req: Request, res: Response, next: NextFunction) => {
+        // middleware
+        console.log(`Request from: ${req.originalUrl}`);
+        console.log(`Request type: ${req.method}`);
+        next();
+      },
+      this.scriptsController.getScripts
+    );
 
     app.route('/scripts/:scriptId').get(cacheMiddleware(config.cache.duration), this.scriptsController.getScript);
   }
