@@ -1,22 +1,102 @@
-import app from './app';
-// import * as https from 'https';
-import * as http from 'http';
-import * as fs from 'fs';
+import * as dotenv from 'dotenv';
+import { Document, Schema, Model, model } from 'mongoose';
+import * as path from 'path';
+import * as express from 'express';
+import * as cors from 'cors';
+import * as bodyParser from 'body-parser';
+import * as xmlparser from 'express-xml-bodyparser';
+import * as mongoose from 'mongoose';
+import * as bluebird from 'bluebird';
+import * as swaggerUi from 'swagger-ui-express';
+import errorMiddleware from './middleware/error.middleare';
 import config from './config';
-import logger from './utils/logger';
+import { RegisterRoutes } from './routes';
+import * as fs from 'fs';
 
-// const httpsOptions = {
-//   key: fs.readFileSync('./config/key.pem'),
-//   cert: fs.readFileSync('./config/cert.pem')
-// };
+import { IUserModel } from './data/repositories/user/user.model';
+import { IWatchListModel } from './data/repositories/user/watchList.model';
+import { IShopModel } from './data/repositories/shop/shop.model';
+import { IShopStaffModel } from './data/repositories/shop/shopStaff.model';
 
-http.createServer(app).listen(config.server.port, () => {
-  console.log('Express server listening on port ' + config.server.port);
+import { UserSchema } from './data/repositories/user/user.schema';
+import { WatchListSchema } from './data/repositories/user/watchList.schema';
+import { ShopSchema } from './data/repositories/shop/shop.schema';
+import { ShopStaffSchema } from './data/repositories/shop/shopStaff.schema';
+
+const User: Model<IUserModel> = model<IUserModel>('User', UserSchema);
+const WatchList: Model<IWatchListModel> = model<IWatchListModel>('WatchList', WatchListSchema);
+const Shop: Model<IShopModel> = model<IShopModel>('Shop', ShopSchema);
+const ShopStaff: Model<IShopStaffModel> = model<IShopStaffModel>('ShopStaff', ShopStaffSchema);
+// Set env values
+dotenv.config();
+
+// Connect to MongoDB
+(mongoose as any).Promise = bluebird;
+mongoose.connect(`${config.dbUri}`, {
+  useCreateIndex: true,
+  useNewUrlParser: true,
+  replicaSet: 'rs0',
+  useUnifiedTopology: true,
+  useFindAndModify: false,
+  autoIndex: false,
+  poolSize: 10,
+  connectTimeoutMS: 45000
 });
 
-process.on('uncaughtException', function(err) {
-  logger.error(err);
+mongoose.connection.on('error', () => {
+  throw new Error(`unable to connect to database: ${process.env.DB_NAME}`);
 });
-// https.createServer(httpsOptions, app).listen(config.port, () => {
-//   console.log('Express server listening on port ' + config.port);
-// });
+
+// Configure Rate Limiter
+const { RateLimiterMongo } = require('rate-limiter-flexible');
+const rateLimiterMongo = new RateLimiterMongo({
+  storeClient: mongoose.connection,
+  points: 4,
+  duration: 1
+}); // 4 request in 1 second per ip address
+const rateLimiter = (req: any, res: any, next: any) => {
+  rateLimiterMongo
+    .consume(req.ip)
+    .then(() => next())
+    .catch(() => res.status(429).send('Whoa! Slow down there little buddy'));
+};
+
+// Configure CORS
+const corsOptions = {
+  origin: (origin: any, callback: any) => {
+    if (process.env.CORS_WHITELIST && process.env.CORS_WHITELIST.indexOf(origin) !== -1) callback(null, true);
+    else callback('Not allowed by CORS');
+  },
+  allowedHeaders: ['Content-Type', 'Authorization', 'Content-Length', 'X-Requested-With', 'Accept'],
+  methods: ['GET', 'PUT', 'POST', 'DELETE', 'OPTIONS'],
+  optionsSuccessStatus: 200
+};
+
+// Configure App
+const app = express();
+
+// app.use(rateLimiter);
+app.use(cors(corsOptions));
+app.use(bodyParser.json());
+app.use(bodyParser.urlencoded({ extended: false }));
+app.use(xmlparser());
+
+const http = require('http').Server(app);
+
+// Start Server
+const port = process.env.API_PORT;
+http.listen(port, () => {
+  console.log(`listening on ${port}`);
+});
+
+// Start Swagger Docs
+RegisterRoutes(app);
+app.use(errorMiddleware);
+try {
+  const swaggerDocument = require('../swagger.json');
+  app.use('/docs', swaggerUi.serve, swaggerUi.setup(swaggerDocument));
+} catch (err) {
+  console.log('Unable to load swagger.json', err);
+}
+
+export = app;

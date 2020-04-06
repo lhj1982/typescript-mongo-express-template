@@ -1,0 +1,26 @@
+{
+  "swagger": {
+    "outputDirectory": ".",
+    "entryFile": "./src/server.ts",
+    "host": "localhost:3000",
+    "basePath": "/",
+    "schemes": ["http", "https"],
+    "description": "API description can go here",
+    "version": "3.0.0",
+    "securityDefinitions": {
+      "api_key": {
+        "type": "apiKey",
+        "name": "Authorization",
+        "in": "header",
+        "template": "Bearer {apiKey}"
+      }
+    }
+  },
+  "routes": {
+    "basePath": "/",
+    "entryFile": "./src/server.ts",
+    "routesDir": "./src/",
+    "controllerPathGlobs": ["./src/services/controllers/**/*.controller.ts"],
+    "authenticationModule": "./src/middleware/authentication.ts"
+  }
+}

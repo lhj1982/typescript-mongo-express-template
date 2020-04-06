@@ -2,7 +2,7 @@ openapi: 3.0.0
 info:
   description: "JBS api document"
   version: "1.0.0"
-  title: "JBS API"
+  title: "JuBenFan API"
   termsOfService: "http://swagger.io/terms/"
   contact:
     email: "lhj1982@gmail.com"
@@ -35,13 +35,13 @@ tags:
   description: "Operations about report"
 - name: "tag"
   description: "Operations about tags"
-- name: "reward"
-  description: "Operations about user rewards"
+- name: "game"
+  description: "Operations about user games"
 
 servers:
   - url: http://localhost:3000
     description: Optional server description, e.g. Internal staging server for testing
-  - url: https://api.boogoogoo.com
+  - url: https://api2.weijinglong.com
     description: Optional server description, e.g. Main (production) server
     
 
@@ -69,6 +69,48 @@ paths:
                 $ref: '#/components/schemas/OauthResponse'
         default:
           description: "Invalid input"
+  /oauth/phonenumber:
+    post:
+      tags:
+      - "auth"
+      summary: "Get user phonenumber and update user object"
+      description: "Get user phonenumber and update user object"
+      operationId: "updatePhoneNumber"
+      requestBody: 
+        description: Request content
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - appName
+                - openId
+                - encryptedData
+                - iv
+              properties:
+                appName:
+                  type: "string"
+                openId:
+                  type: "string"
+                encryptedData:
+                  type: "string"
+                iv:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:    
+              schema:
+                type: "object"
+                $ref: '#/components/schemas/User' 
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
   /oauth/code2session:
     post:
       tags:
@@ -184,10 +226,10 @@ paths:
                 - name
                 - description
                 - duration
-                - minNumberOfPersons
-                - maxNumberOfPersons
+                - minNumberOfSpots
+                - maxNumberOfSpots
                 - introImage
-                - estimatedPrice
+                - minPrice
               properties:
                 key:
                   type: string
@@ -195,10 +237,10 @@ paths:
                   type: string
                 description:
                   type: string
-                minNumberOfPersons:
+                minNumberOfSpots:
                   type: integer
                   format: int32
-                maxNumberOfPersons:
+                maxNumberOfSpots:
                   type: integer
                   format: int32
                 duration:
@@ -206,7 +248,7 @@ paths:
                   format: int32
                 introImage:
                   type: string
-                estimatedPrice:
+                minPrice:
                   type: string
                 tags:
                   type: array
@@ -239,6 +281,11 @@ paths:
           required: true
           schema:
             type: string
+        - in: query
+          name: extended
+          description: flag that whether to fetch extended script info
+          schema:
+            type: boolean
       responses:
         200:
           description: "Success"
@@ -568,7 +615,7 @@ paths:
                   type: "string"
                 hostComment:
                   type: "string"
-                numberOfOfflinePersons:
+                numberOfOfflinePlayers:
                   type: "integer"
                   format: "int32"
                   minimum: 0
@@ -588,7 +635,7 @@ paths:
                 hostUserId: '2323'
                 hostUserMobile: 'test'
                 hostUserWechatId: 'test'
-                numberOfOfflinePersons: 0
+                numberOfOfflinePlayers: 0
                 price: 100
                 isHostJoin: true
                 supportPayment: false
@@ -778,7 +825,7 @@ paths:
                   type: "string"
                 hostComment:
                   type: "string"
-                numberOfOfflinePersons:
+                numberOfOfflinePlayers:
                   type: "integer"
                   format: "int32"
       responses:
@@ -930,6 +977,8 @@ paths:
                 mobile:
                   type: "string"
                 wechatId:
+                  type: "string"
+                invitationCode:
                   type: "string"
       parameters:
         - in: path
@@ -1259,6 +1308,77 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
+  /events/{eventId}/qrcode/{appName}:
+    get:
+      tags:
+      - "event"
+      summary: "Generate event detail QR code"
+      description: "Generate event detail QR code, can be used to share"
+      operationId: "getEventQRcode"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          description: event id
+          schema:
+            type: "string"
+        - in: path
+          name: appName
+          description: mini app name
+          schema:
+            type: "string"
+            enum:
+              - jbfonline
+              - jbfmeetup
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "string"
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /events/{eventId}/invite:
+    post:
+      tags:
+      - "event"
+      summary: "Invite user to join a event"
+      description: "Invite user to join a event using a invitation code"
+      operationId: "inviteEventUser"
+      security:
+        - bearerAuth: []
+      requestBody:
+        description: "Invite event user request object"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                inviteeMobile:
+                  type: "string"
+                  description: "invitee mobile number"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserInvitation'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
   /users:
     post:
       tags:
@@ -1449,138 +1569,138 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
-  /users/{userId}/endorse:
-    post:
-      tags:
-      - "user"
-      summary: "Endorse a given user"
-      description: "Endorse a given user"
-      operationId: "endorseUser"
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          description: user id to tag
-          schema:
-            type: string
-      requestBody:
-        description: "Tag user request body"
-        required: true
-        content:
-          application/json:
-            schema:
-              type: "object"
-              properties:
-                type:
-                  type: "string"
-                  enum: ["event_user"]
-                endorsedBy:
-                  type: "string"
-                objectId:
-                  type: "string"
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserEndorsement'
-        default:
-          description: "Invalid input"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-    delete:
-      tags:
-      - "user"
-      summary: "Delete endorse a given user"
-      description: "Delete endorse a given user"
-      operationId: "unendorseUser"
-      security:
-        - bearerAuth: []
-      parameters:
-        - in: path
-          name: userId
-          required: true
-          description: user id to tag
-          schema:
-            type: string
-      requestBody:
-        description: "Tag user request body"
-        required: true
-        content:
-          application/json:
-            schema:
-              type: "object"
-              properties:
-                type:
-                  type: "string"
-                  enum: ["event_user"]
-                endorsedBy:
-                  type: "string"
-                objectId:
-                  type: "string"
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/UserEndorsement'
-        default:
-          description: "Invalid input"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
+  # /users/{userId}/endorse:
+  #   post:
+  #     tags:
+  #     - "user"
+  #     summary: "Endorse a given user"
+  #     description: "Endorse a given user"
+  #     operationId: "endorseUser"
+  #     security:
+  #       - bearerAuth: []
+  #     parameters:
+  #       - in: path
+  #         name: userId
+  #         required: true
+  #         description: user id to tag
+  #         schema:
+  #           type: string
+  #     requestBody:
+  #       description: "Tag user request body"
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: "object"
+  #             properties:
+  #               type:
+  #                 type: "string"
+  #                 enum: ["event_user"]
+  #               endorsedBy:
+  #                 type: "string"
+  #               objectId:
+  #                 type: "string"
+  #     responses:
+  #       200:
+  #         description: "Success"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/UserEndorsement'
+  #       default:
+  #         description: "Invalid input"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/ApiResponse'
+  #   delete:
+  #     tags:
+  #     - "user"
+  #     summary: "Delete endorse a given user"
+  #     description: "Delete endorse a given user"
+  #     operationId: "unendorseUser"
+  #     security:
+  #       - bearerAuth: []
+  #     parameters:
+  #       - in: path
+  #         name: userId
+  #         required: true
+  #         description: user id to tag
+  #         schema:
+  #           type: string
+  #     requestBody:
+  #       description: "Tag user request body"
+  #       required: true
+  #       content:
+  #         application/json:
+  #           schema:
+  #             type: "object"
+  #             properties:
+  #               type:
+  #                 type: "string"
+  #                 enum: ["event_user"]
+  #               endorsedBy:
+  #                 type: "string"
+  #               objectId:
+  #                 type: "string"
+  #     responses:
+  #       200:
+  #         description: "Success"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/UserEndorsement'
+  #       default:
+  #         description: "Invalid input"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/ApiResponse'
 
-  /users/update-tags-endorsements:
-    post:
-      tags:
-      - "user"
-      summary: "Update user tags and endorsements"
-      description: "Update user tags and endorsements."
-      operationId: "updateUserTagsAndEndorsements"
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              code:
-                type: "string"
-        default:
-          description: "Invalid input"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
-  /users/update-credits:
-    post:
-      tags:
-      - "user"
-      summary: "Update user credits"
-      description: "Update user credits."
-      operationId: "updateUserCredits"
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              code:
-                type: "string"
-        default:
-          description: "Invalid input"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
+  # /users/update-tags-endorsements:
+  #   post:
+  #     tags:
+  #     - "user"
+  #     summary: "Update user tags and endorsements"
+  #     description: "Update user tags and endorsements."
+  #     operationId: "updateUserTagsAndEndorsements"
+  #     security:
+  #       - bearerAuth: []
+  #     responses:
+  #       200:
+  #         description: "Success"
+  #         content:
+  #           application/json:
+  #             code:
+  #               type: "string"
+  #       default:
+  #         description: "Invalid input"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/ApiResponse'
+  # /users/update-credits:
+  #   post:
+  #     tags:
+  #     - "user"
+  #     summary: "Update user credits"
+  #     description: "Update user credits."
+  #     operationId: "updateUserCredits"
+  #     security:
+  #       - bearerAuth: []
+  #     responses:
+  #       200:
+  #         description: "Success"
+  #         content:
+  #           application/json:
+  #             code:
+  #               type: "string"
+  #       default:
+  #         description: "Invalid input"
+  #         content:
+  #           application/json:
+  #             schema:
+  #               $ref: '#/components/schemas/ApiResponse'
 
   /profile:
     get:
@@ -1668,10 +1788,68 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
+  /profile/my-games:
+    get:
+      tags:
+      - "user"
+      summary: "Get my games"
+      description: "Get games open by DM or user has joined."
+      operationId: "getMyGames"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: query
+          name: status
+          description: status to include, if multiple status, separate by comma
+          schema:
+            type: string
+          example:
+            status: ready,complete
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Game'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /profile/my-online-scripts:
+    get:
+      tags:
+      - "user"
+      summary: "Get online script of logged in user"
+      description: "This is only available for dm users, One user can be dm of ONE and ONLY ONE shop"
+      operationId: "getMyOnlineScripts"
+      security:
+        - bearerAuth: []
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Script'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
   /profile/wechat-data:
     post:
       tags:
-      - "profile"
+      - "user"
       summary: "Get wechat encrypted data"
       description: "Get wechat encrypted data, such as phoneNumber"
       operationId: "getWeChatData"
@@ -1684,7 +1862,13 @@ paths:
           application/json:
             schema:
               type: "object"
+              required:
+                - appName
+                - encryptedData
+                - iv
               properties:
+                appName:
+                  type: "string"
                 encryptedData:
                   type: "string"
                 iv:
@@ -1955,12 +2139,53 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
+  /orders/{orderId}/refund:
+    post:
+      tags:
+      - "order"
+      summary: "Create an order refund"
+      description: "Create an order refund, amount of refund depends on how much the coupons value"
+      operationId: "createRefund"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: orderId
+          description: order id
+          schema:
+            type: "string"
+      requestBody:
+        description: "Create order refund request body"
+        required: true
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                coupons:
+                  type: "array"
+                  items:
+                    type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Refund'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
   /orders/{orderId}/refund/{refundId}:
     put:
       tags:
       - "order"
-      summary: "Update a refund"
-      description: "Update a refund."
+      summary: "Update an order refund"
+      description: "Update an order refund."
       operationId: "updateRefund"
       security:
         - bearerAuth: []
@@ -2330,45 +2555,49 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
-  /rewards/redemptions:
-    get:
-      tags:
-      - "reward"
-      summary: "Get active reward redemptions"
-      description: "Get available reward redemptions"
-      operationId: "getActiveRewardRedemptions"
-      security:
-        - bearerAuth: []
-      responses:
-        200:
-          description: "Success"
-          content:
-            application/json:
-              schema:
-                type: "array"
-                items:
-                  $ref: '#/components/schemas/RewardRedemption'
-        default:
-          description: "Invalid input"
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/ApiResponse'
+  /games:
     post:
       tags:
-      - "reward"
-      summary: "Create reward redemptions"
-      description: "Create reward redemptions"
-      operationId: "createRewardRedemption"
+      - "game"
+      summary: "Add new game"
+      operationId: "addGame"
       security:
         - bearerAuth: []
       requestBody: 
-        description: Request content
         required: true
+        description: add new game request body
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/CreateRewardRedemptionRequest'
+              type: "object"
+              required:
+                - scriptId
+                - shopId
+                - startTime
+                - hostUserId
+                - price
+                - code
+              properties:
+                scriptId:
+                  type: "string"
+                shopId:
+                  type: "string"
+                startTime:
+                  type: "string"
+                  format: "date-time"
+                hostUserId:
+                  type: "string"
+                price:
+                  type: "integer"
+                  format: "int32"
+                code:
+                  type: "string"
+                hostUserMobile:
+                  type: "string"
+                hostUserWechatId:
+                  type: "string"
+                hostComment: 
+                  type: "string"
       responses:
         200:
           description: "Success"
@@ -2377,7 +2606,7 @@ paths:
               schema:
                 type: "array"
                 items:
-                  $ref: '#/components/schemas/RewardRedemption'
+                  $ref: '#/components/schemas/Game'
         default:
           description: "Invalid input"
           content:
@@ -2385,18 +2614,26 @@ paths:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
 
-  /rewards/redemptions/{rewardRedemptionId}/apply:
-    post:
+  /games/{roomId}/code/{code}:
+    get:
       tags:
-      - "reward"
-      security:
-        - bearerAuth: []
+      - "game"
+      summary: "Get game script summary by room id and code"
+      description: "Get game script summary by room id and code, it's used for get brief description of a games and its players, details information such as rundowns and clues, should be fetched separately using other apis"
+      operationId: "getGameScriptByRoomAndCode"
       parameters:
         - in: path
-          name: rewardRedemptionId
-          description: Reward redemption id
+          name: roomId
+          required: true
+          description: room id
           schema:
-            type: "string"
+            type: string
+        - in: path
+          name: code
+          required: true
+          description: room code
+          schema:
+            type: string
       responses:
         200:
           description: "Success"
@@ -2405,13 +2642,291 @@ paths:
               schema:
                 type: "array"
                 items:
-                  $ref: '#/components/schemas/UserRewardRedemption'
+                  $ref: '#/components/schemas/Game'
         default:
           description: "Invalid input"
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponse'
+
+  /games/{gameId}:
+    put:
+      tags:
+      - "game"
+      summary: "Update a game"
+      operationId: "updateGame"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          description: game id
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: update game request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                startTime:
+                  type: "string"
+                hostComment:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Game'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+    delete:
+      tags:
+      - "game"
+      summary: "Delete a game"
+      operationId: "deleteGame"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          description: game id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/Game'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /games/{gameId}/script-rundown/{playerId}:
+    get:
+      tags:
+      - "game"
+      summary: "Get game script rundown by player id"
+      operationId: "getGameScriptRundownByPlayer"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          description: game id
+          schema:
+            type: string
+        - in: path
+          name: playerId
+          required: true
+          description: player id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/ScriptRundown'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /games/{gameId}/clues/{playerId}:
+    get:
+      tags:
+      - "game"
+      summary: "Get game script clues by player id"
+      operationId: "getGameScriptCluesByPlayer"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: gameId
+          required: true
+          description: game id
+          schema:
+            type: string
+        - in: path
+          name: playerId
+          required: true
+          description: player id
+          schema:
+            type: string
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/ScriptClue'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /games/{roomId/}clues/{scriptClueId}:
+    put:
+      tags:
+      - "game"
+      summary: "Update a game script clue"
+      operationId: "updateGameScriptClue"
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: roomId
+          required: true
+          description: room id
+          schema:
+            type: string
+        - in: path
+          name: scriptClueId
+          required: true
+          description: script clue id
+          schema:
+            type: string
+      requestBody:
+        required: true
+        description: update game script clue request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              properties:
+                playerId:
+                  type: "string"
+                  description: "new owner of clue"
+                isPublic:
+                  type: "boolean"
+                hasRead:
+                  type: "boolean"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/GameScriptClue'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /games/join:
+    post:
+      tags:
+      - "game"
+      summary: "Join a game"
+      operationId: "joinGame"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        description: join game request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - roomId
+                - playerId
+                - code
+              properties:
+                roomId:
+                  type: "string"
+                playerId:
+                  type: "string"
+                code:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/GamePlayer'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
+  /games/leave:
+    post:
+      tags:
+      - "game"
+      summary: "Leave a game"
+      operationId: "leaveGame"
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        description: leave game request body
+        content:
+          application/json:
+            schema:
+              type: "object"
+              required:
+                - roomId
+                - playerId
+              properties:
+                roomId:
+                  type: "string"
+                playerId:
+                  type: "string"
+      responses:
+        200:
+          description: "Success"
+          content:
+            application/json:
+              schema:
+                type: "array"
+                items:
+                  $ref: '#/components/schemas/GamePlayer'
+        default:
+          description: "Invalid input"
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponse'
+
 
 components:
   securitySchemes:
@@ -2423,12 +2938,21 @@ components:
     OauthLogin:
       type: "object"
       required:
+        - appName
         - code
         - type
         - nickName
         - avatarUrl
         - gender
+        - encryptedData
+        - iv
       properties:
+        appName:
+          type: "string"
+          description: "Which miniapp the login should apply"
+          enum:
+            - jbfonline
+            - jbfmeetup
         code:
           type: "string"
         type:
@@ -2452,7 +2976,12 @@ components:
           type: "string"
         language:
           type: "string"
+        encryptedData:
+          type: "string"
+        iv:
+          type: "string"
       example:
+        appName: 'jbfonline'
         code: '1234'
         type: 'wxapp'
         nickName: 'test'
@@ -2582,15 +3111,15 @@ components:
           type: "string"
         description:
           type: "string"
-        minNumberOfPersons:
+        minNumberOfSpots:
           type: "integer"
-        maxNumberOfPersons:
+        maxNumberOfSpots:
           type: "integer"
         duration:
           type: "integer"
         introImage:
           type: "string"
-        estimatedPrice:
+        minPrice:
           type: "string"
         createdAt: 
           type: "string"
@@ -2706,16 +3235,16 @@ components:
         shop:
           type: "object"
           $ref: '#/components/schemas/Shop'
-        minNumberOfPersons:
+        minNumberOfSpots:
           type: "integer"
           format: "int32"
-        maxNumberOfPersons:
+        maxNumberOfSpots:
           type: "integer"
           format: "int32"
-        numberOfOfflinePersons:
+        numberOfOfflinePlayers:
           type: "integer"
           format: "int32"
-        numberOfParticipators:
+        numberOfPlayers:
           type: "integer"
           format: "int32"
         minNumberOfAvailableSpots:
@@ -3136,32 +3665,36 @@ components:
           type: "string"
           format: "date-time"
 
-    UserEndorsement:
+    Game:
       type: "object"
       properties:
-        user:
-          $ref: "#/components/schemas/User"
-        taggedBy:
-          $ref: "#/components/schemas/User"
-        type:
+        id:
           type: "string"
-        objectId:
+        hostUser:
+          $ref: "#/components/schemas/User"
+        script:
+          $ref: "#/components/schemas/Script"
+        shop:
+          $ref: "#/components/schemas/Shop"
+        startTime:
+          type: "string"
+        endTime:
+          type: "string"
+        code:
+          type: "string"
+        hostComment:
           type: "string"
         createdAt:
           type: "string"
-          format: "date-time"
-
-    LeadingBoard:
+        updatedAt:
+          type: "string"
+    
+    GamePlayer:
       type: "object"
       properties:
-        type:
-          type: "string"
-          enum: ['most_commission_single_event', 'most_host_event_count', 'most_commission_all_events', 'most_join_event_count_male', 'most_join_event_count_female', 'most_user_endorsements', 'most_watched_scripts']
-        user:
-          $ref: "#/components/schemas/User"
-        value:
-          type: "string"
-        data:
+        game:
+          $ref: "#/components/schemas/Game"
+        playerId:
           type: "string"
         createdAt:
           type: "string"
@@ -3170,141 +3703,101 @@ components:
           type: "string"
           format: "date-time"
 
-    WatchList:
+    ScriptRundown:
       type: "object"
       properties:
         id:
           type: "string"
-        type:
+        script:
+          $ref: "#/components/schemas/Script"
+        playerId:
           type: "string"
-          enum: ['script_interested']
-        objectId:
-          type: "string"
-        user:
-          $ref: "#/components/schemas/User"
-        createdAt:
-          type: "string"
-          format: "date-time"
-
-    ExternalCustomer:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        key:
-          type: "string"
-        name:
-          type: "string"
-        address:
-          type: "string"
-        createdAt:
-          type: "string"
-          format: "date-time"
-    RewardRedemption:
-      type: "object"
-      properties:
-        id:
-          type: "string"
-        type:
-          type: "string"
-          enum: ['partner_service', 'voucher', 'product_shop', 'other']
         name:
           type: "string"
         description:
           type: "string"
-        longDescription:
-          type: "string"
-        quantity:
-          type: "integer"
-          format: "int32"
-        points:
-          type: "integer"
-          format: "int32"
-        available:
-          type: "integer"
-          format: "int32"
-        externalCustomer:
-          $ref: "#/components/schemas/ExternalCustomer"
-        status:
-          type: "string"
-          enum: ['active', 'expired']
-        createdAt:
-          type: "string"
-          format: "date-time"
-        expiredAt:
-          type: "string"
-          format: "date-time"
-        updatedAt:
-          type: "string"
-          format: "date-time"
+        rundowns:
+          type: "array"
+          items:
+            type: "object"
+            properties:
+              title:
+                type: "string"
+              content:
+                type: "string"
 
-    UserRewardRedemption:
+    ScriptClue:
       type: "object"
       properties:
-        id:
+        script:
+          $ref: "#/components/schemas/Script"
+        categories:
+          type: "array"
+          items:
+            $ref: "#/components/schemas/ScriptClueCategory"
+        title:
           type: "string"
-        user:
-          $ref: "#/components/schemas/User"
-        rewardRedemption:
-          $ref: "#/components/schemas/RewardRedemption"
-        voucherCode:
+        content:
           type: "string"
-        voucherValue:
-          type: "integer"
-          format: "int32"
-        points:
-          type: "integer"
-          format: "int32"
-        status:
+        public:
+          type: "boolean"
+        images:
+          type: "array"
+          items:
+            type: "string"
+        round:
           type: "string"
-          enum: ['created', 'used', 'invalid', 'expired']
-        createdAt:
-          type: "string"
-          format: "date-time"
-        expiredAt:
-          type: "string"
-          format: "date-time"
-        updatedAt:
-          type: "string"
-          format: "date-time"
-    CreateRewardRedemptionRequest:
+
+    ScriptClueCategory:
       type: "object"
-      required:
-        - externalCustomerId
-        - type
-        - title
-        - subtitle
       properties:
-        externalCustomerId:
-          type: "string"
-        type:
+        script:
+          $ref: "#/components/schemas/Script"
+        key:
           type: "string"
         title:
           type: "string"
-        subtitle:
+        field:
           type: "string"
-        description:
+        value:
           type: "string"
-        points:
-          type: "integer"
-          format: "int32"
-        quantity:
-          type: "integer"
-          format: "int32"
-        scope:
+
+    GameScriptClue:
+      type: "object"
+      properties:
+        game:
+          $ref: "#/components/schemas/Game"
+        scriptClue:
+          $ref: "#/components/schemas/ScriptClue"
+        owner:
           type: "string"
-        validPeriod:
+        isPublic:
+          type: "boolean"
+        hasRead:
+          type: "boolean"
+    UserInvitation:
+      type: "object"
+      properties:
+        id:
           type: "string"
-        reminder:
+        type:
           type: "string"
-        instruction1:
+        objectId:
           type: "string"
-        instruction2:
+        invitor:
+          $ref: "#/components/schemas/User"
+        inviteeMobile:
           type: "string"
-        note:
+        invitee:
+          $ref: "#/components/schemas/User"
+        invitationCode:
           type: "string"
-        imageUrl:
+        expiredAt:
           type: "string"
+          format: "date-time"
+        createdAt:
+          type: "string"
+          format: "date-time"
 
     PaginatedDataResponse:
       type: "object"

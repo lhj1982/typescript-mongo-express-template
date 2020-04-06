@@ -4,10 +4,19 @@ module.exports = {
     entrypoint: `http://localhost:3000`
   },
   cache: {
+    password: 'password',
     duration: 2 * 60 * 60 // cache in second
   },
-  appId: 'wxf59749a45686779c',
-  appSecret: '<app key>',
+  appName: {
+    jbfonline: {
+      appId: 'wxf59749a45686779c',
+      appSecret: '<app key>'
+    },
+    jbfmeetup: {
+      appId: 'wxf59749a45686779c',
+      appSecret: '<app key>'
+    }
+  },
   mch: {
     mchId: '1560901281',
     key: '<merch key>',
@@ -26,6 +35,13 @@ module.exports = {
   query: {
     offset: 0,
     limit: 10
+  },
+  event: {
+    invitationDuration: 30, // in days
+    invitationCodeLength: 12,
+    coupon: {
+      duration: 365 // in days
+    }
   },
   qiniu: {
     bucket: 'jbs-server',

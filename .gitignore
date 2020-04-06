@@ -7,3 +7,4 @@ data
 docker/db/mongo-data
 **/.env
 **/mongodb.key
+**/*.log

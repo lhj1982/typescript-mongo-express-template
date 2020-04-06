@@ -1,5 +1,5 @@
 // admin > shopstaff > user
-const getTopRole = roles => {
+const getTopRole = (roles): string => {
   const topRole = undefined;
   if (roles) {
     for (let i = 0; i < roles.length; i++) {
@@ -26,4 +26,25 @@ const getTopRole = roles => {
   return topRole;
 };
 
-export { getTopRole };
+const getUserIds = (eventCommissions): string[] => {
+  // let userIds = [];
+  const {
+    commissions: { invitors, participators }
+  } = eventCommissions;
+  const invitorUserIds = invitors.map(_ => {
+    const {
+      user: { _id: userId }
+    } = _;
+    return userId;
+  });
+  const participatorUserIds = participators.map(_ => {
+    const {
+      user: { _id: userId }
+    } = _;
+    return userId;
+  });
+
+  return invitorUserIds.concat(participatorUserIds);
+};
+
+export { getTopRole, getUserIds };

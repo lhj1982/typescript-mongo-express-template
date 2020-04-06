@@ -76,6 +76,12 @@ class EventCannotCancelException extends HttpException {
   }
 }
 
+class EventCannotInviteException extends HttpException {
+  constructor(id: string) {
+    super(500, 'event_cannot_invite', `Event ${id} cannot invite`);
+  }
+}
+
 class OrderCannotPayException extends HttpException {
   constructor(id: string) {
     super(500, 'order_cannot_pay', `Order ${id} cannot be paid`);
@@ -118,6 +124,36 @@ class InsufficientRedemptionsException extends HttpException {
   }
 }
 
+class CannotJoinGameException extends HttpException {
+  constructor(id: string, message: string) {
+    super(500, 'cannot_join_game', `Cannot join game ${id}, ${message}`);
+  }
+}
+
+class CannotLeaveGameException extends HttpException {
+  constructor(id: string, message: string) {
+    super(500, 'cannot_leave_game', `Cannot leave game ${id}, ${message}`);
+  }
+}
+
+class GameCannotCancelException extends HttpException {
+  constructor(id: string) {
+    super(500, 'game_cannot_cancel', `Game ${id} cannot cancel`);
+  }
+}
+
+class InvalidCouponException extends HttpException {
+  constructor(id: string) {
+    super(500, 'invalid_coupon', `Coupon ${id} is invalid to use`);
+  }
+}
+
+class GenericServerErrorException extends HttpException {
+  constructor(message: string) {
+    super(500, 'generic_server_error', `$message`);
+  }
+}
+
 export {
   AuthorizationException,
   WrongCredentialException,
@@ -130,6 +166,7 @@ export {
   EventCannotUpdateException,
   EventCannotCompleteException,
   EventCannotCancelException,
+  EventCannotInviteException,
   UserIsBlacklistedException,
   OrderCannotPayException,
   OrderAlreadyPaidException,
@@ -137,5 +174,10 @@ export {
   InvalidPaymentSignatureException,
   CannotRefundException,
   InsufficientCreditsException,
-  InsufficientRedemptionsException
+  InsufficientRedemptionsException,
+  CannotJoinGameException,
+  CannotLeaveGameException,
+  GameCannotCancelException,
+  InvalidCouponException,
+  GenericServerErrorException
 };

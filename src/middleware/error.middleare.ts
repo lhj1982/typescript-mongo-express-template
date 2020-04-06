@@ -1,6 +1,6 @@
 import { NextFunction, Request, Response } from 'express';
 import HttpException from '../exceptions/http.exception';
-import logger from '../utils/logger';
+import logger from './logger';
 
 function errorMiddleware(error: HttpException, request: Request, response: Response, next: NextFunction) {
   console.log(error.stack);
