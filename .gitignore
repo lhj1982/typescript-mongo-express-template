@@ -8,3 +8,4 @@ docker/db/mongo-data
 **/.env
 **/mongodb.key
 **/*.log
+swagger.json

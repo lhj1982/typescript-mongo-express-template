@@ -1,9 +1,9 @@
-import config from '../../config';
+// import config from '../../config';
 import logger from '../../middleware/logger';
 import { pp } from '../../utils/stringUtil';
-import { nowDate } from '../../utils/dateUtil';
+// import { nowDate } from '../../utils/dateUtil';
 import { IUserModel } from '../../data/repositories/user/user.model';
-// import LoginSessionsRepo from '../repositories/loginSessions.repository';
+import LoginSessionsRepo from '../../data/repositories/user/loginSessions.repository';
 import UsersRepo from '../../data/repositories/user/users.repository';
 // import EventUsersRepo from '../repositories/eventUsers.repository';
 // import UserTagsRepo from '../repositories/userTags.repository';
@@ -14,19 +14,19 @@ import WXBizDataCrypt from '../../utils/WXBizDataCrypt';
 
 class UserService {
   async logSession(session: any): Promise<void> {
-    // try {
-    //   await LoginSessionsRepo.addNew(session);
-    // } catch (err) {
-    //   throw err;
-    // }
+    try {
+      await LoginSessionsRepo.addNew(session);
+    } catch (err) {
+      throw err;
+    }
   }
 
   async updateSession(session: any): Promise<void> {
-    // try {
-    //   await LoginSessionsRepo.updateSession(session);
-    // } catch (err) {
-    //   throw err;
-    // }
+    try {
+      await LoginSessionsRepo.updateSession(session);
+    } catch (err) {
+      throw err;
+    }
   }
 
   async findById(id: string): Promise<any> {
@@ -83,24 +83,24 @@ class UserService {
     }
   }
 
-  // async findByUserNameAndPassword(username: string, password: string): Promise<any> {
-  //   try {
-  //     const user = await UsersRepo.findByUserNameAndPassword(username, password);
-  //     if (!user) {
-  //       throw new WrongCredentialException(username, password);
-  //     }
-  //     const { shopStaffs } = user;
-  //     const shops = shopStaffs.map(_ => {
-  //       const { shop } = _;
-  //       return shop;
-  //     });
-  //     const userObj = user.toObject();
-  //     delete userObj.shopStaffs;
-  //     return { ...userObj, shops };
-  //   } catch (err) {
-  //     throw err;
-  //   }
-  // }
+  async findByUserNameAndPassword(username: string, password: string): Promise<any> {
+    try {
+      const user = await UsersRepo.findByUserNameAndPassword(username, password);
+      if (!user) {
+        throw new WrongCredentialException(username, password);
+      }
+      const { shopStaffs } = user;
+      const shops = shopStaffs.map(_ => {
+        const { shop } = _;
+        return shop;
+      });
+      const userObj = user.toObject();
+      delete userObj.shopStaffs;
+      return { ...userObj, shops };
+    } catch (err) {
+      throw err;
+    }
+  }
 
   /**
    * 1. check user session key

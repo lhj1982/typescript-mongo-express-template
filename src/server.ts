@@ -17,16 +17,28 @@ import { IUserModel } from './data/repositories/user/user.model';
 import { IWatchListModel } from './data/repositories/user/watchList.model';
 import { IShopModel } from './data/repositories/shop/shop.model';
 import { IShopStaffModel } from './data/repositories/shop/shopStaff.model';
+import { IScriptModel } from './data/repositories/script/script.model';
+import { IEventModel } from './data/repositories/event/event.model';
+import { IEventUserModel } from './data/repositories/event/eventUser.model';
+import { IEventCommissionModel } from './data/repositories/event/eventCommission.model';
 
 import { UserSchema } from './data/repositories/user/user.schema';
 import { WatchListSchema } from './data/repositories/user/watchList.schema';
 import { ShopSchema } from './data/repositories/shop/shop.schema';
 import { ShopStaffSchema } from './data/repositories/shop/shopStaff.schema';
+import { ScriptSchema } from './data/repositories/script/script.schema';
+import { EventSchema } from './data/repositories/event/event.schema';
+import { EventUserSchema } from './data/repositories/event/eventUser.schema';
+import { EventCommissionSchema } from './data/repositories/event/eventCommission.schema';
 
 const User: Model<IUserModel> = model<IUserModel>('User', UserSchema);
 const WatchList: Model<IWatchListModel> = model<IWatchListModel>('WatchList', WatchListSchema);
 const Shop: Model<IShopModel> = model<IShopModel>('Shop', ShopSchema);
 const ShopStaff: Model<IShopStaffModel> = model<IShopStaffModel>('ShopStaff', ShopStaffSchema);
+const Script: Model<IScriptModel> = model<IScriptModel>('Script', ScriptSchema);
+const Event: Model<IEventModel> = model<IEventModel>('Event', EventSchema);
+const EventUser: Model<IEventUserModel> = model<IEventUserModel>('EventUser', EventUserSchema);
+const EventCommission: Model<IEventCommissionModel> = model<IEventCommissionModel>('EventCommission', EventCommissionSchema);
 // Set env values
 dotenv.config();
 

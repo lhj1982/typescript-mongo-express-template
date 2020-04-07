@@ -11,6 +11,8 @@ import {
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { AuthController } from "./services/controllers/auth.controller";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+import { EventsController } from "./services/controllers/events.controller";
+// WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { ProfileController } from "./services/controllers/profile.controller";
 // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
 import { UsersController } from "./services/controllers/users.controller";
@@ -55,6 +57,26 @@ const models: TsoaRoute.Models = {
       city: { dataType: "string", required: true },
       language: { dataType: "string", required: true },
       description: { dataType: "string", required: true }
+    },
+    additionalProperties: true
+  },
+  // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+  IAddEventRequest: {
+    dataType: "refObject",
+    properties: {
+      shopId: { dataType: "string" },
+      scriptId: { dataType: "string" },
+      startTime: { dataType: "string" },
+      endTime: { dataType: "string" },
+      hostUserId: { dataType: "string" },
+      hostComment: { dataType: "string" },
+      numberOfPlayers: { dataType: "double" },
+      price: { dataType: "double" },
+      hostUserMobile: { dataType: "string" },
+      hostUserWechatId: { dataType: "string" },
+      numberOfOfflinePlayers: { dataType: "double" },
+      isHostJoin: { dataType: "boolean" },
+      supportPayment: { dataType: "boolean" }
     },
     additionalProperties: true
   },
@@ -125,6 +147,36 @@ export function RegisterRoutes(app: express.Express) {
     const controller = new AuthController();
 
     const promise = controller.login.apply(controller, validatedArgs as any);
+    promiseHandler(controller, promise, response, next);
+  });
+  // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+  app.post("/events", authenticateMiddleware([{ access_token: [] }]), function(
+    request: any,
+    response: any,
+    next: any
+  ) {
+    const args = {
+      body: {
+        in: "body",
+        name: "body",
+        required: true,
+        ref: "IAddEventRequest"
+      },
+      req: { in: "request", name: "req", required: true, dataType: "object" }
+    };
+
+    // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
+
+    let validatedArgs: any[] = [];
+    try {
+      validatedArgs = getValidatedArgs(args, request);
+    } catch (err) {
+      return next(err);
+    }
+
+    const controller = new EventsController();
+
+    const promise = controller.addEvent.apply(controller, validatedArgs as any);
     promiseHandler(controller, promise, response, next);
   });
   // WARNING: This file was auto-generated with tsoa. Please do not modify it. Re-run tsoa to re-generate this file: https://github.com/lukeautry/tsoa
