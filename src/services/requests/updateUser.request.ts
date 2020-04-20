@@ -1,12 +1,21 @@
+/**
+ * @example
+ * {
+ * 	"nickName": "test",
+ * 	"description": "xxx",
+ * 	"email": "xxx",
+ * 	"wechatId": "xxx",
+ * 	"avatarImage": "xxx",
+ * 	"ageTag": "xxx",
+ * 	"gameLevel": 0
+ * }
+ */
 export interface IUpdateUserRequest {
-  nickName: string;
-  gender: string;
-  description: string;
-  city: string;
-  email: string;
-  mobile: string;
-  wechatId: string;
-  company: string;
-  avatarImage: string;
-  ageTag: string[];
+  nickName?: string;
+  description?: string;
+  email?: string;
+  wechatId?: string;
+  avatarImage?: string;
+  ageTag?: string;
+  gameLevel?: number;
 }

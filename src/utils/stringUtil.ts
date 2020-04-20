@@ -2,6 +2,10 @@ const crypto = require('crypto');
 // const algorithm = 'aes-256-ctr';
 // const password = '>aXjR>&ht,Du5w^Z';
 
+const isEmpty = (value: string): boolean => {
+  return (typeof value == 'string' && !value.trim()) || typeof value == 'undefined' || value === null;
+};
+
 const pp = (string): string => {
   return JSON.stringify(string);
 };
@@ -101,7 +105,7 @@ const replacePlacehoder = (message, placeholder, replacement): string => {
 
  * @type {[type]}
  */
-const normalizePaymentData = (data: object): object => {
+const normalizePaymentData = (data: any): any => {
   const response = {};
   for (const attr in data) {
     if (data[attr]) {
@@ -157,4 +161,4 @@ const isMobileNumber = (phone): object => {
   return { valid: flag, message };
 };
 
-export { pp, escapeRegex, randomSerialNumber, getRandomInt, queryStringToJSON, replacePlacehoder, isMobileNumber, getRandomString, normalizePaymentData, md5, decryption };
+export { isEmpty, pp, escapeRegex, randomSerialNumber, getRandomInt, queryStringToJSON, replacePlacehoder, isMobileNumber, getRandomString, normalizePaymentData, md5, decryption };

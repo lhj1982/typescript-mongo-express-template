@@ -1,4 +1,4 @@
-import logger from '../../middleware/logger';
+import logger from '../../middleware/logger.middleware';
 import config from '../../config';
 // import GamesRepo from '../repositories/games.repository';
 // import GamePlayersRepo from '../repositories/gamePlayers.repository';

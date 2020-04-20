@@ -8,6 +8,14 @@ const nowDate = (convertToUTC = true): moment.Moment => {
   }
 };
 
+const date2moment = (date: Date, convertToUTC = true): moment.Moment => {
+  if (convertToUTC) {
+    return moment(date).utc();
+  } else {
+    return moment(date);
+  }
+};
+
 const string2Date = (dateStr: string, convertToUTC = true, pattern = 'YYYY-MM-DD'): moment.Moment => {
   if (convertToUTC) {
     return moment(dateStr, pattern).utc();
@@ -61,4 +69,4 @@ const getDate = (dateStr: string): string => {
   return date.format('MM-DD');
 };
 
-export { string2Date, formatDate, addDays, addDays2, add, getDay, getTime, nowDate, date2String, getDate };
+export { string2Date, date2moment, formatDate, addDays, addDays2, add, getDay, getTime, nowDate, date2String, getDate };

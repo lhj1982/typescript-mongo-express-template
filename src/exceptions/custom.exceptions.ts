@@ -34,7 +34,7 @@ class InvalidRequestException extends HttpException {
   }
 }
 
-class ResourceAlreadyExist extends HttpException {
+class ResourceAlreadyExistException extends HttpException {
   constructor(resource: string, ...keys) {
     super(500, `${resource.toLowerCase()}_already_exist`, `Resource ${resource} with key ${keys} is already exist`);
   }
@@ -148,9 +148,21 @@ class InvalidCouponException extends HttpException {
   }
 }
 
+class CouponCannotRefundException extends HttpException {
+  constructor(id: string) {
+    super(500, 'coupon_cannot_refund', `Coupon ${id} cannot refund`);
+  }
+}
+
+class InvalidMemberCardException extends HttpException {
+  constructor(id: string) {
+    super(500, 'invalid_member_card', `MemberCard ${id} is invalid to use`);
+  }
+}
+
 class GenericServerErrorException extends HttpException {
   constructor(message: string) {
-    super(500, 'generic_server_error', `$message`);
+    super(500, 'generic_server_error', `${message}`);
   }
 }
 
@@ -160,7 +172,7 @@ export {
   AccessDeniedException,
   ResourceNotFoundException,
   InvalidRequestException,
-  ResourceAlreadyExist,
+  ResourceAlreadyExistException,
   EventIsFullBookedException,
   EventCannotCreateException,
   EventCannotUpdateException,
@@ -179,5 +191,7 @@ export {
   CannotLeaveGameException,
   GameCannotCancelException,
   InvalidCouponException,
+  CouponCannotRefundException,
+  InvalidMemberCardException,
   GenericServerErrorException
 };

@@ -1,18 +1,26 @@
 // import config from '../../config';
-import logger from '../../middleware/logger';
+import logger from '../../middleware/logger.middleware';
 import { pp } from '../../utils/stringUtil';
 // import { nowDate } from '../../utils/dateUtil';
+import GenericService from './generic.service';
+
+import { IMemberModel } from '../../data/repositories/member/member.model';
 import { IUserModel } from '../../data/repositories/user/user.model';
+import { IUserTagModel } from '../../data/repositories/tag/userTag.model';
+import { IEventUserModel } from '../../data/repositories/event/eventUser.model';
+import { ITagModel } from '../../data/repositories/tag/tag.model';
 import LoginSessionsRepo from '../../data/repositories/user/loginSessions.repository';
+import MembersRepo from '../../data/repositories/member/members.repository';
+// import OrdersRepo from '../../data/repositories/order/orders.repository';
 import UsersRepo from '../../data/repositories/user/users.repository';
 // import EventUsersRepo from '../repositories/eventUsers.repository';
-// import UserTagsRepo from '../repositories/userTags.repository';
+import UserTagsRepo from '../../data/repositories/tag/userTags.repository';
 import WatchListsRepo from '../../data/repositories/user/watchLists.repository';
-// import GamePlayersRepo from '../repositories/gamePlayers.repository';
+import GamePlayersRepo from '../../data/repositories/game/gamePlayers.repository';
 import { ResourceNotFoundException, WrongCredentialException } from '../../exceptions/custom.exceptions';
 import WXBizDataCrypt from '../../utils/WXBizDataCrypt';
 
-class UserService {
+class UserService extends GenericService {
   async logSession(session: any): Promise<void> {
     try {
       await LoginSessionsRepo.addNew(session);
@@ -35,13 +43,18 @@ class UserService {
       if (!user) {
         throw new ResourceNotFoundException('User', id);
       }
-      const { shopStaffs } = user;
-      let shops = [];
-      if (shopStaffs) {
-        shops = shopStaffs.map(_ => {
-          const { shop } = _;
-          return shop;
-        });
+      const { employers } = user;
+      let dmShops = [];
+      if (employers) {
+        dmShops = employers
+          .filter(_ => {
+            const { role } = _;
+            return role === 'dungeon-master';
+          })
+          .map(_ => {
+            const { shop } = _;
+            return shop;
+          });
       }
       const watchList = await WatchListsRepo.find({
         user: user._id,
@@ -53,7 +66,9 @@ class UserService {
       });
       const userObj = user.toObject();
       delete userObj.shopStaffs;
-      return { ...userObj, shops, watches };
+      delete userObj.tokenIssuedAt;
+      delete userObj.tokenExpiredAt;
+      return { ...userObj, dmShops, watches };
     } catch (err) {
       throw err;
     }
@@ -124,6 +139,86 @@ class UserService {
 
   async saveOrUpdate(user: any): Promise<IUserModel> {
     return UsersRepo.saveOrUpdateUser(user);
+  }
+
+  async addUserTag(
+    userTag: {
+      taggedBy: IUserModel;
+      user: IUserModel;
+      tag: ITagModel;
+      type: string;
+      objectId: string;
+    },
+    eventUser: IEventUserModel
+  ): Promise<IUserTagModel> {
+    const session = await this.getSession();
+    session.startTransaction();
+    try {
+      const opts = { session };
+
+      const newUserTag = await UserTagsRepo.saveOrUpdate(userTag, opts);
+      await session.commitTransaction();
+      await this.endSession();
+
+      // update eventUser tags after successfully update user tags
+      // const eventUserTags = await this.getEventUserTags(newUserTag);
+      // const eventUserToUpdate = Object.assign(eventUser.toObject(), {
+      //   tags: eventUserTags
+      // });
+      // console.log(eventUserToUpdate);
+      // await EventUsersRepo.saveOrUpdate(eventUserToUpdate, opts);
+      // const { taggedBy, objectId } = userTag;
+      // const rewardToAdd = {
+      //   user: taggedBy,
+      //   objectId,
+      //   type: 'user_tagged',
+      //   points: 2
+      // };
+      // await this.saveUserRewardsForEndorsementAndTag(rewardToAdd, opts);
+      await session.commitTransaction();
+      await this.endSession();
+      return newUserTag;
+    } catch (err) {
+      console.error(err);
+      await session.abortTransaction();
+      await this.endSession();
+      throw err;
+    }
+  }
+
+  /**
+   * Get tags for given event user.
+   *
+   * return data is like
+   *
+   * [ { count: 1, tag: 5de6859193c0f4662f4374e7 } ]
+   *
+   * @param {any} userTag [description]
+   */
+  async getEventUserTags(userTag: any): Promise<IUserTagModel[]> {
+    const { type, user, objectId } = userTag;
+    const userTags = await UserTagsRepo.findByUser({ user, type, objectId });
+    return userTags;
+  }
+
+  async getUserGames(user: IUserModel, status: string[] = ['ready', 'completed']): Promise<any> {
+    const gamePlayers = await GamePlayersRepo.findByUser(user, status);
+    // console.log(gamePlayers);
+    // filter away game == null
+    const games = gamePlayers
+      .filter(_ => {
+        const { game } = _;
+        return game;
+      })
+      .map(_ => {
+        const { game } = _;
+        return game;
+      });
+    return games;
+  }
+
+  async getUserMember(user: IUserModel): Promise<IMemberModel> {
+    return await MembersRepo.findByUser(user);
   }
 }
 

@@ -1,15 +1,19 @@
 import config from '../../config';
 import { randomSerialNumber } from '../../utils/stringUtil';
+import { IEventModel } from '../../data/repositories/event/event.model';
+import { IEventCommissionModel } from '../../data/repositories/event/eventCommission.model';
+import { IEventUserModel } from '../../data/repositories/event/eventUser.model';
+import { INotificationModel } from '../../data/repositories/notification/notification.model';
 import UsersRepository from '../../data/repositories/user/users.repository';
 import NotificationRepository from '../../data/repositories/notification/notifications.repository';
 const axios = require('axios');
-import logger from '../../middleware/logger';
+import logger from '../../middleware/logger.middleware';
 import { date2String } from '../../utils/dateUtil';
 import { queryStringToJSON, replacePlacehoder, isMobileNumber } from '../../utils/stringUtil';
 
 const { spCode, loginName, password } = config.sms;
 class MessageService {
-  async sendMessage(message: string, recipients: string[], serialNumber: string) {
+  async sendMessage(message: string, recipients: string[], serialNumber: string): Promise<object> {
     const numbers = recipients.join(',');
     const encodedMessage = encodeURIComponent(message);
     try {
@@ -40,7 +44,7 @@ class MessageService {
    * @param {[type]} eventUser [description]
    * @param {[type]} options   [description]
    */
-  async saveNewJoinEventNotifications(event, eventUser, options) {
+  async saveNewJoinEventNotifications(event, eventUser, options): Promise<INotificationModel[]> {
     const notifications = [];
     try {
       notifications.push(await this.createNotifications({ event, eventUser }, 'event_joined', 'shop'));
@@ -61,7 +65,7 @@ class MessageService {
    * @param {[type]} eventCommissions   [description]
    * @param {[type]} options            [description]
    */
-  async saveCompleteEventNotifications(event, eventCommissions, options) {
+  async saveCompleteEventNotifications(event, eventCommissions, options): Promise<INotificationModel[]> {
     const notifications = [];
     try {
       notifications.push(await this.createNotifications({ event, eventCommissions }, 'event_completed', 'shop'));
@@ -82,7 +86,7 @@ class MessageService {
    * @param {[type]} event   [description]
    * @param {[type]} options [description]
    */
-  async saveNewEventNotifications(event, options) {
+  async saveNewEventNotifications(event, options): Promise<INotificationModel[]> {
     const notifications = [];
     try {
       notifications.push(await this.createNotifications({ event }, 'event_created', 'shop'));
@@ -97,7 +101,7 @@ class MessageService {
     }
   }
 
-  async sendNewEventMessages(notifications, options) {
+  async sendNewEventMessages(notifications, options): Promise<void> {
     for (let i = 0; i < notifications.length; i++) {
       const { smsMessage, recipients, serialNumber, audience, eventType } = notifications[i];
       if (audience !== 'shop' || (audience === 'shop' && eventType === 'event_created')) {
@@ -110,11 +114,11 @@ class MessageService {
     }
   }
 
-  async createNotifications(object: any, eventType: string, audience: string) {
+  async createNotifications(object: any, eventType: string, audience: string): Promise<any> {
     logger.info(`Create notification for eventType: ${eventType}, audience: ${audience}`);
     const { event, eventUser, eventCommissions } = object;
     const { id: eventId } = event;
-    const notifications = [];
+    // const notifications = [];
     const {
       notification: { templates, smsTemplates }
     } = config;
@@ -138,7 +142,9 @@ class MessageService {
         //   recipient = mobile;
         // } else if (audience === 'host') {
         if (audience === 'host') {
-          const { hostUserMobile } = event;
+          const {
+            hostUser: { mobile: hostUserMobile }
+          } = event;
           recipient = hostUserMobile;
         }
         break;
@@ -196,10 +202,7 @@ class MessageService {
       return;
     }
     try {
-      const {
-        id: objectId,
-        shop: { mobile }
-      } = event;
+      const { id: objectId } = event;
       let participatorWechatId,
         participatorName = '';
       if (eventUser) {
@@ -209,7 +212,7 @@ class MessageService {
         participatorName = nickName;
         participatorWechatId = wechatId;
       }
-      const status = 'created';
+      // const status = 'created';
       return {
         serialNumber,
         eventType,
@@ -224,7 +227,7 @@ class MessageService {
     }
   }
 
-  async generateCommissionDetailContext(event, commission) {
+  async generateCommissionDetailContext(event: IEventModel, commission: IEventCommissionModel): Promise<string> {
     const { members } = event;
     if (!commission) {
       return '';
@@ -293,7 +296,7 @@ class MessageService {
    * @param {[type]} eventUsers [description]
    * @param {string} userId     [description]
    */
-  getParticipatorUser(eventUsers, userId: string) {
+  getParticipatorUser(eventUsers, userId: string): IEventUserModel {
     for (let i = 0; i < eventUsers.length; i++) {
       const eventUser = eventUsers[i];
       const {
@@ -309,7 +312,7 @@ class MessageService {
   }
 
   // 【不咕咕】拼团成功！<shopName>，《<scriptName>》[<startTime>]拼团成功，请锁场！感谢<hostName>（微信号）的辛勤组团，根据不咕咕返现规则，您需要依次返现给①<hostName>（微信号）xxx元；②[参加者]（微信号）xx元；③[参加者]（微信号）xx元；④[参加者]（微信号）xx元；⑤[参加者]（微信号）xx元… 若有疑问，请联系不咕咕官方微信。
-  updateMessageTemplate(messageTemplate: string, placeholders: string[], replacements) {
+  updateMessageTemplate(messageTemplate: string, placeholders: string[], replacements): string {
     let message = messageTemplate;
     try {
       for (let i = 0; i < placeholders.length; i++) {

@@ -1,6 +1,7 @@
-import { Request, Response as HttpResponse, NextFunction } from 'express';
+// import { Request, Response as HttpResponse, NextFunction } from 'express';
 import { Route, Get, Controller, Post, BodyProp, Put, Delete, SuccessResponse, Tags, Body, OperationId, Response, Security } from 'tsoa';
 import AuthApi from '../api/auth';
+// import GenericController from './generic.controller';
 // import UsersRepo from '../repositories/users.repository';
 // import RolesRepo from '../repositories/roles.repository';
 // import UserService from '../services/user.service';
@@ -9,8 +10,8 @@ import { InvalidRequestException, WrongCredentialException, ResourceNotFoundExce
 import * as moment from 'moment';
 import * as jwt from 'jsonwebtoken';
 import config from '../../config';
-import logger from '../../middleware/logger';
-import { IOauthLoginRequest } from '../requests';
+import logger from '../../middleware/logger.middleware';
+import { IOauthLoginRequest, ICode2SessionRequest, IUpdatePhoneNumberRequest } from '../requests';
 import { IResponse, IErrorResponse } from '../responses';
 import UserService from '../svcs/user.service';
 import RoleService from '../svcs/role.service';
@@ -24,9 +25,6 @@ export class AuthController extends Controller {
   @Response<IErrorResponse>('400', 'Bad Request')
   @SuccessResponse('200', 'OK')
   public async login(@Body() body: IOauthLoginRequest): Promise<IResponse> {
-    // login = async (req: Request, res: HttpResponse, next: NextFunction): Promise<IResponse> => {
-    // console.log(process.env.NODE_ENV);
-    // const params = req.body;
     // prettier-ignore
     const { code, appName, type, nickName, avatarUrl, gender, country, province, city, language, description, encryptedData, iv } = body;
     try {
@@ -187,48 +185,56 @@ export class AuthController extends Controller {
   //   }
   // };
 
-  // updatePhoneNumber = async (req: Request, res: Response, next: NextFunction) => {
-  //   const { appName, openId, iv, encryptedData } = req.body;
-  //   try {
-  //     if (!appName) {
-  //       throw new InvalidRequestException('Auth', ['appName']);
-  //     }
-  //     // console.log(body);
-  //     const user = await UserService.findOneByParams({ openId });
-  //     if (!user) {
-  //       throw new ResourceNotFoundException('User', openId);
-  //     }
-  //     const { sessionKey } = user;
-  //     const result = await UserService.getWechatEncryptedData(config['appName'][appName]['appId'], {
-  //       iv,
-  //       encryptedData,
-  //       sessionKey
-  //     });
-  //     const { phoneNumber } = result;
-  //     const userToUpdate = Object.assign(user, {
-  //       mobile: phoneNumber
-  //     });
-  //     const newUser = await UsersRepo.saveOrUpdateUser(userToUpdate);
-  //     res.json({ code: 'SUCCESS', data: newUser });
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // };
+  @Post('/phonenumber')
+  @Tags('auth')
+  @OperationId('updatePhoneNumber')
+  @Response<IErrorResponse>('400', 'Bad Request')
+  @SuccessResponse('200', 'OK')
+  public async updatePhoneNumber(@Body() body: IUpdatePhoneNumberRequest): Promise<IResponse> {
+    const { appName, openId, iv, encryptedData } = body;
+    try {
+      if (!appName) {
+        throw new InvalidRequestException('Auth', ['appName']);
+      }
+      // console.log(body);
+      const user = await UserService.findOneByParams({ openId });
+      if (!user) {
+        throw new ResourceNotFoundException('User', openId);
+      }
+      const { sessionKey } = user;
+      const result = await UserService.getWechatEncryptedData(config['appName'][appName]['appId'], {
+        iv,
+        encryptedData,
+        sessionKey
+      });
+      const { phoneNumber } = result;
+      const userToUpdate = Object.assign(user, {
+        mobile: phoneNumber
+      });
+      const newUser = await UserService.saveOrUpdate(userToUpdate);
+      return { code: 'SUCCESS', data: newUser };
+    } catch (err) {
+      throw err;
+    }
+  }
 
-  // code2session = async (req: Request, res: Response, next: NextFunction) => {
-  //   const {
-  //     body: { appName, code }
-  //   } = req;
-  //   try {
-  //     if (!appName) {
-  //       throw new InvalidRequestException('Auth', ['appName']);
-  //     }
-  //     const response = await AuthApi.code2Session(appName, code);
-  //     res.json({ code: 'SUCCESS', response });
-  //   } catch (err) {
-  //     next(err);
-  //   }
-  // };
+  @Post('/code2session')
+  @Tags('auth')
+  @OperationId('authorizeCode2Session')
+  @Response<IErrorResponse>('400', 'Bad Request')
+  @SuccessResponse('200', 'OK')
+  public async code2session(@Body() body: ICode2SessionRequest): Promise<IResponse> {
+    const { appName, code } = body;
+    try {
+      if (!appName) {
+        throw new InvalidRequestException('Auth', ['appName']);
+      }
+      const response = await AuthApi.code2Session(appName, code);
+      return { code: 'SUCCESS', data: response };
+    } catch (err) {
+      throw err;
+    }
+  }
 
   getTokenPayload = (user: any): any => {
     // const now = Math.floor(new Date().getTime()/1000);

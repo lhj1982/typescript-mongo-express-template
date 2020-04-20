@@ -228,7 +228,7 @@ paths:
                 - duration
                 - minNumberOfSpots
                 - maxNumberOfSpots
-                - introImage
+                - coverImage
                 - minPrice
               properties:
                 key:
@@ -246,7 +246,7 @@ paths:
                 duration:
                   type: integer
                   format: int32
-                introImage:
+                coverImage:
                   type: string
                 minPrice:
                   type: string
@@ -3117,7 +3117,7 @@ components:
           type: "integer"
         duration:
           type: "integer"
-        introImage:
+        coverImage:
           type: "string"
         minPrice:
           type: "string"

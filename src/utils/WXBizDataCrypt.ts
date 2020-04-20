@@ -1,4 +1,4 @@
-import logger from '../middleware/logger';
+import logger from '../middleware/logger.middleware';
 const crypto = require('crypto');
 
 export default class WXBizDataCrypt {

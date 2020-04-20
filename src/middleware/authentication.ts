@@ -1,15 +1,16 @@
 import * as express from 'express';
-import { AuthorizationException, ResourceNotFoundException, AccessDeniedException } from '../exceptions/custom.exceptions';
+import { AuthorizationException, AccessDeniedException } from '../exceptions/custom.exceptions';
 import config from '../config';
+import { IUserModel } from '../data/repositories/user/user.model';
 import UserService from '../services/svcs/user.service';
-import logger from './logger';
+import logger from './logger.middleware';
 import * as jwt from 'jsonwebtoken';
 
 /**
  * If any of requested permission is not found in allowedPermissions, return false, otherwise, return true
  * @type {[type]}
  */
-const matchPermission = (requestedPermissions, allowedPermissions) => {
+const matchPermission = (requestedPermissions, allowedPermissions): boolean => {
   // console.log(requestedPermissions);
   // console.log(allowedPermissions);
   for (let i = 0; i < requestedPermissions.length; i++) {
@@ -41,12 +42,12 @@ const matchPermission = (requestedPermissions, allowedPermissions) => {
 //   return result;
 // };
 
-const isAllowed = (claimedPermissions, allowedPermissions: any[]) => {
+const isAllowed = (claimedPermissions, allowedPermissions: any[]): boolean => {
   // const requestedPermissions = normalizePermissions(claimedPermissions);
   return matchPermission(claimedPermissions, allowedPermissions);
 };
 
-const getAllowedPermissions = (roles: any[]) => {
+const getAllowedPermissions = (roles: any[]): string[] => {
   try {
     const result = [];
 
@@ -92,9 +93,11 @@ async function expressAuthentication(req: express.Request, securityName: string,
           // check if a user exists
           // res.locals.tokenIssuedAt = issuedAt;
           // res.locals.tokenExpiredAt = expiredAt;
+          // req.issuedAt = issuedAt;
+          // req.expiredAt = expiredAt;
           try {
             // const user = undefined;
-            const user: any = await UserService.findById(userId);
+            const user: IUserModel = await UserService.findById(userId);
             if (!user) {
               reject(new AccessDeniedException(userId, `User is not found`));
             }
@@ -112,12 +115,17 @@ async function expressAuthentication(req: express.Request, securityName: string,
               if (user && isAllowed(scopes, allowedPermissions)) {
                 resolve(user);
               } else {
-                logger.warn(`You are not allowed to perform action ${scopes}`);
+                logger.warn(`User ${userId} is not allowed to perform action ${scopes}`);
                 reject(new AccessDeniedException(userId, `Forbidden`));
               }
             }
             // res.locals.loggedInUser = user;
-            resolve(user);
+            resolve(
+              Object.assign(user, {
+                tokenIssuedAt: issuedAt,
+                tokenExpiredAt: expiredAt
+              })
+            );
           } catch (err) {
             reject(err);
           }

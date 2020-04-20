@@ -1,7 +1,11 @@
 module.exports = {
   server: {
     port: 3000,
-    entrypoint: `https://api.boogoogoo.com`
+    entrypoint: `https://api.boogoogoo.com`,
+    cors: {
+      whitelist: ['http://127.0.0.1:3000', 'wss://127.0.0.01:8888', 'undefined']
+    },
+    dbBatchSize: 25
   },
   cache: {
     password: 'password',
@@ -35,6 +39,10 @@ module.exports = {
   query: {
     offset: 0,
     limit: 10
+  },
+  member: {
+    memberCardNoLength: 16,
+    maxNumberOfMemberCardToCreateInBatch: 100
   },
   event: {
     invitationDuration: 30, // in days

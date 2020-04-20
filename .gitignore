@@ -3,9 +3,9 @@ node_modules/
 dist/
 tmp
 *.png
-data
 docker/db/mongo-data
 **/.env
 **/mongodb.key
-**/*.log
 swagger.json
+src/routes.ts
+**/*.log
