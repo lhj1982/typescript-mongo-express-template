@@ -9,3 +9,4 @@ docker/db/mongo-data
 swagger.json
 src/routes.ts
 **/*.log
+package-lock.json
